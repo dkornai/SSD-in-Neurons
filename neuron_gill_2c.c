@@ -60,7 +60,7 @@ const i8 UPDATE_INDEX[12] = {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3};
 
 
 // MAIN GILLESPIE FUNCTION
-void gillespie_loop(
+void gillespie_2c_loop(
     const f8    mu,     // death rate
     const f8    gamma,  // transport rate
     const f8    delta,  // mutant deficiency ratio
