@@ -99,16 +99,15 @@ void gillespie_ring_loop(
     f8  reaction_rate_arr[26] = {
         0, 0,                                            // birth rates, will be updated
         mu, mu, mu, mu, mu, mu, mu, mu, mu, mu, mu, mu,  // death rates, constant
-        gm, gm, gm, gm, gm, gm, gm, gm, gm, gm, gm, gm   // transport rates
+        gm, gm, gm, gm, gm, gm, gm, gm, gm, gm, gm, gm   // transport rates, constant
         }; 
 
     f8  birth_rate;
-    f8  trnsp_rate;
     i8  index;
 
-    f8* reaction_propen_arr = (f8 *) malloc(N_REACTIONS * sizeof(f8));        // unnormalizaed reaction propensity, will be overwritten during each iteration
+    f8* reaction_propen_arr = (f8 *) malloc(N_REACTIONS * sizeof(f8));   // unnormalizaed reaction propensity, will be overwritten during each iteration
     f8* reaction_probal_arr = (f8 *) malloc(N_REACTIONS * sizeof(f8));   // normalized reaction propensity, will be overwritten during each iteration
-    f8  prop_sum = 0.0;                                                      // sum of reaction propensities, will be overwritten during each iteration
+    f8  prop_sum = 0.0;                                                  // sum of reaction propensities, will be overwritten during each iteration
 
     // set t to the starting time
     f8  t = time_points[0];

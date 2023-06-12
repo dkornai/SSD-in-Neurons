@@ -4,34 +4,107 @@ from scipy.signal import resample
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def plot_ODE(results, time_points, delta, vars):
+'''
+Plot the results of a numerical solution to an ODE.
+'''
+def plot_ODE(
+        results,        # variable values over time (number of wildtype and mutant in each compartment)
+        time_points,    # time points where system is sampled
+        delta,          # mutant deficiency, used in calculating effective population sizes
+        vars,           # name of the variables being tracked (compartment name + wt/mt)
+        comp            # name of the compartments (e.g. soma, axon, etc.)
+        ):
+    
+    n_vars = len(vars)
+    n_comp = len(comp)
+    
+    # plot wildtype and mutant counts in each compartment over time
     plt.subplots(figsize=(10, 5))
-    plt.plot(time_points, results[0], label = 'soma w')
-    plt.plot(time_points, results[1], label = 'soma m')
-    plt.plot(time_points, results[2], label = 'axon w')
-    plt.plot(time_points, results[3], label = 'axon m')
+    for i in range(n_vars):
+        plt.plot(time_points, results[i], label = vars[i])
     plt.legend()
 
-    soma_het = results[1]/(results[1]+results[0])
-    axon_het = results[3]/(results[3]+results[2])
+    # plot heteroplasmy levels in each compartment over time
     plt.subplots(figsize=(10, 5))
-    plt.plot(time_points, soma_het, label = 'soma het')
-    plt.plot(time_points, axon_het, label = 'axon het')
-    #plt.ylim([0, 1])
+    for i in range(n_comp):
+        het = results[(i*2)+1]/(results[(i*2)+1]+results[i*2])
+        plt.plot(time_points, het, label = f'{comp[i]} het')
+    plt.ylim([0, 1])
     plt.legend()
 
-    soma_count = results[1]*delta+results[0]
-    axon_count = results[3]*delta+results[2]
+    # plot effective population sizes over time
     plt.subplots(figsize=(10, 5))
-    plt.plot(time_points, soma_count, label = 'soma eff. pop. size')
-    plt.plot(time_points, axon_count, label = 'axon eff. pop. size')
-    plt.ylim(min(0, min(soma_count), min(axon_count)) - 5, max(max(soma_count), max(axon_count)) + 5)
+    for i in range(n_comp):
+        eps = results[(i*2)+1]*delta + results[i*2]
+        plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size')
     plt.legend()
 
-    print("Final counts:")
-    for i, res in enumerate(results[:,-1]): print(f'{vars[i]}\t{round(res,2)}\t')
+    # print parameter values in the final time point
+    print("Final counts of mt and wt in each compartment:")
+    for i in range(n_vars):
+        print(f'{vars[i]}\t{round(results[i,-1], 4)}\t')
 
-    print("Final effective population size:")
-    print("soma:",round(soma_count[-1],2))
-    print("axon:",round(axon_count[-1],2))
+    print("\nFinal effective population sizes in each compartment:")
+    for i in range(n_comp):
+        eps = results[(i*2)+1,-1]*delta + results[i*2,-1]
+        print(f'{comp[i]}\t{round(eps, 4)}\t')
 
+
+'''
+Plot the mean values across many replicate gillespie simulations of the system
+'''
+def plot_gillespie(
+        replicate_results,  # variable values over time (number of wildtype and mutant in each compartment)
+        time_points,    # time points where system is sampled
+        delta,          # mutant deficiency, used in calculating effective population sizes
+        vars,           # name of the variables being tracked (compartment name + wt/mt)
+        comp            # name of the compartments (e.g. soma, axon, etc.)
+        ):
+    
+    n_vars = len(vars)
+    n_comp = len(comp)
+    
+    # plot wildtype and mutant counts in each compartment over time
+    mean_per_var_counts = []
+    plt.subplots(figsize=(10, 5))
+    for i in range(n_vars):
+        counts = np.nanmean(replicate_results[:,i,:], axis = 0)
+        mean_per_var_counts.append(counts)
+
+        plt.plot(time_points, counts, label = vars[i])
+    plt.legend()
+
+    # plot heteroplasmy levels in each compartment over time
+    mean_per_comp_het = []
+    plt.subplots(figsize=(10, 5))
+    for i in range(n_comp):
+        # calculate mean heteroplasmy as a mean of ratios
+        het = np.nanmean(replicate_results[:,(i*2)+1,:]/(replicate_results[:,(i*2)+1,:]+replicate_results[:,i*2,:]), axis = 0)
+        mean_per_comp_het.append(het)
+
+        plt.plot(time_points, het, label = f'{comp[i]} het')
+    plt.ylim([0, 1])
+    plt.legend()
+
+    # plot effective population sizes over time
+    mean_per_comp_eps = []
+    plt.subplots(figsize=(10, 5))
+    for i in range(n_comp):
+        eps = np.nanmean(replicate_results[:,(i*2)+1,:]*delta + replicate_results[:,i*2,:], axis = 0)
+        mean_per_comp_eps.append(eps)
+
+        plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size')
+    plt.legend()
+
+    # print parameter values in the final time point
+    print("Final mean counts of mt and wt in each compartment:")
+    for i in range(n_vars):
+        print(f'{vars[i]}\t{round(mean_per_var_counts[i][-1], 4)}\t')
+
+    print("Final mean heteroplasmy in each compartment:")
+    for i in range(n_comp):
+        print(f'{comp[i]}\t{round(mean_per_comp_het[i][-1], 4)}\t')
+
+    print("\nFinal mean effective population sizes in each compartment:")
+    for i in range(n_comp):
+        print(f'{comp[i]}\t{round(mean_per_comp_eps[i][-1], 4)}\t')
