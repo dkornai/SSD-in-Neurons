@@ -19,7 +19,7 @@ def plot_ODE(
     # plot wildtype and mutant counts in each compartment over time
     plt.subplots(figsize=(10, 5))
     for i in range(n_vars):
-        plt.plot(time_points, results[i], label = vars[i])
+        plt.plot(time_points, results[i], label = vars[i], alpha = 0.7)
     plt.legend()
     plt.title('wt and mt counts in each compartment over time')
 
@@ -27,17 +27,21 @@ def plot_ODE(
     plt.subplots(figsize=(10, 5))
     for i in range(n_comp):
         het = results[(i*2)+1]/(results[(i*2)+1]+results[i*2])
-        plt.plot(time_points, het, label = f'{comp[i]} het')
+        plt.plot(time_points, het, label = f'{comp[i]} het', alpha = 0.7)
     plt.ylim([0, 1])
     plt.legend()
     plt.title('heteroplasmy in each compartment over time')
 
     # plot effective population sizes over time
     plt.subplots(figsize=(10, 5))
+    min_eps = 100000; max_eps = 0
     for i in range(n_comp):
         eps = results[(i*2)+1]*delta + results[i*2]
-        plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size')
-    plt.ylim([round(min(eps)-5,0), round(max(eps)+5,0)])
+        if min(eps) < min_eps: min_eps = min(eps)
+        if max(eps) > max_eps: max_eps = max(eps)
+
+        plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size', alpha = 0.7)
+    plt.ylim([round(min_eps-5,0), round(max_eps+5,0)])
     plt.legend()
     plt.title('effective population size in each compartment over time')
 
@@ -73,7 +77,7 @@ def plot_gillespie(
         counts = np.nanmean(replicate_results[:,i,:], axis = 0)
         mean_per_var_counts.append(counts)
 
-        plt.plot(time_points, counts, label = vars[i])
+        plt.plot(time_points, counts, label = vars[i], alpha = 0.7)
     plt.legend()
     plt.title('mean wt and mt counts in each compartment over time')
 
@@ -85,7 +89,7 @@ def plot_gillespie(
         het = np.nanmean(replicate_results[:,(i*2)+1,:]/(replicate_results[:,(i*2)+1,:]+replicate_results[:,i*2,:]), axis = 0)
         mean_per_comp_het.append(het)
 
-        plt.plot(time_points, het, label = f'{comp[i]} het')
+        plt.plot(time_points, het, label = f'{comp[i]} het', alpha = 0.7)
     plt.ylim([0, 1])
     plt.legend()
     plt.title('mean heteroplasmy in each compartment over time')
@@ -102,7 +106,7 @@ def plot_gillespie(
         if min(eps) < min_eps: min_eps = min(eps)
         if max(eps) > max_eps: max_eps = max(eps)
 
-        plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size')
+        plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size', alpha = 0.7)
     plt.ylim([round(min_eps-5,0), round(max_eps+5,0)])
     plt.legend()
     plt.title('mean effective population size in each compartment over time')
@@ -127,24 +131,30 @@ def plot_gillespie(
 
 
 def plot_network(G):
+    # Extract 'birth_type' values for node colors
+    birth_type_values = [G.nodes[node]['birth_type'] for node in G.nodes()]
+
+    # Assign colors based on 'birth_type' attribute
+    node_colors = ['lightblue' if G.nodes[node]['birth_type'] == 0 else 'lightgreen' if G.nodes[node]['birth_type'] == 1 else 'orange' for node in G.nodes()]
+
     pos = nx.spring_layout(G)
     node_sizes = [G.nodes[node]['nss']*2 for node in G.nodes()]
-    edge_widths = [G.edges[edge]['rate']*20 for edge in G.edges()]
+    edge_widths = [G.edges[edge]['rate']*50 for edge in G.edges()]
 
     plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
 
-    # Draw nodes with sizes based on 'NSS' attribute
-    nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color='lightblue', alpha=0.8)
+    # Draw nodes with sizes and colors based on attributes
+    nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors, alpha=0.8)
 
-    # Draw edges with widths based on 'weight' attribute
-    nx.draw_networkx_edges(G, pos, width=edge_widths, connectionstyle='arc3,rad=0.1', alpha = 1.0)
+    # Draw edges with adjusted connectionstyle
+    nx.draw_networkx_edges(G, pos, alpha=1, width=edge_widths, arrowstyle='->', connectionstyle='arc3,rad=0.1')
 
     # Draw node labels
     nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold')
 
-    # Draw 'birth_type' values next to each node
-    labels = {node: f"\n\n{G.nodes[node]['birth_type']}" for node in G.nodes()}
-    nx.draw_networkx_labels(G, pos, labels, font_size=10, font_color='red', font_weight='bold')
+    ## Draw 'birth_type' values next to each node
+    #labels = {node: f"\n\n{G.nodes[node]['birth_type']}" for node in G.nodes()}
+    #nx.draw_networkx_labels(G, pos, labels, font_size=10, font_color='red', font_weight='bold')
 
     plt.axis('off')  # Hide the axis
     plt.show()  # Display the graph
