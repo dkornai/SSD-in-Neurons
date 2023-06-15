@@ -1,0 +1,1 @@
+gcc -shared -Wl,-soname,simulate_gillespie -o simulate_gillespie.so -fPIC simulate_gillespie.c
