@@ -1,1 +1,0 @@
-gcc -shared -Wl,-soname,neuron_gill_2c -o neuron_gill_2c.so -fPIC neuron_gill_2c.c

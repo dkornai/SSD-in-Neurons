@@ -1,1 +1,0 @@
-gcc -shared -Wl,-soname,gill_ring -o gill_ring.so -fPIC gill_ring.c
