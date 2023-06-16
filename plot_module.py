@@ -94,8 +94,6 @@ def plot_gillespie(
     plt.legend()
     plt.title('mean heteroplasmy in each compartment over time')
 
-    print(np.array(mean_per_comp_het).shape)
-
     # plot effective population sizes over time
     min_eps = 100000; max_eps = 0
     mean_per_comp_eps = []

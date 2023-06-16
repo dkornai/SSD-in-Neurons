@@ -70,6 +70,7 @@ def gillespie_reaction_dict_from_network(G):
     n_compartments = G.number_of_nodes()
     n_populations = n_compartments*2
 
+    reaction_types = []
 
     n_reactions = 0
     reactions = []
@@ -86,7 +87,7 @@ def gillespie_reaction_dict_from_network(G):
     for index, row in df.iterrows():
         if row['birth_type'] != 0:
             for index_offset in range(2):
-                n_reactions += 1
+                n_reactions += 1; reaction_types.append("birth")
                 
                 ## ADD TO REACTIONS
                 reactions.append(birth_react(n_populations, index*2+index_offset))
@@ -101,6 +102,7 @@ def gillespie_reaction_dict_from_network(G):
                 
                 ## SPECIFT INDEX OF NODE
                 state_index.append(index*2+index_offset)
+
                 
         ## ADD TO RATE UPDATES
         if row['birth_type'] == 2:
@@ -112,7 +114,7 @@ def gillespie_reaction_dict_from_network(G):
     ## DEATH REACTIONS
     for index, row in df.iterrows():
         for index_offset in range(2):
-            n_reactions += 1
+            n_reactions += 1; reaction_types.append("death")
             
             ## ADD TO REACTIONS
             reactions.append(death_react(n_populations, index*2+index_offset))
@@ -126,7 +128,7 @@ def gillespie_reaction_dict_from_network(G):
     ## TRANSPORT REACTIONS
     for index, row in df_edges.iterrows():
         for index_offset in range(2):
-            n_reactions += 1
+            n_reactions += 1; reaction_types.append("trnspt")
             
             src_i = node_names_list.index(row['source'])*2 + index_offset
             dst_i = node_names_list.index(row['target'])*2 + index_offset
@@ -142,12 +144,15 @@ def gillespie_reaction_dict_from_network(G):
 
     # printout of results
     print("> Reactions:")
-    print("reaction #\tupdate to system\trate\tstate index")
-    for i in range(n_reactions): print(f'{i}\t\t{reactions[i]}\t{reaction_rates[i]}\t{state_index[i]}')
+    print("react.#\tstate i\ttype\trate\tupdate to system")
+    for i in range(n_reactions): 
+        print(f'{i}\t{state_index[i]}\t{reaction_types[i]}\t{reaction_rates[i]}\t{reactions[i]}')
 
-    print("\n> Dynamic birth rates:")
-    print("reaction #s\tpar(c_b, mu, nss, delta)\tstate index")
-    for i in range(n_rate_update_b): print(f'{birthrate_updates_reaction[i]}, {birthrate_updates_reaction[i]+1}\t\t{birthrate_updates_par[i]}\t\t{birthrate_state_index[i]}')
+    if n_rate_update_b > 0:
+        print("\n> Dynamic birth rates:")
+        print("react.#\tstate i\tpar(c_b, mu, nss, delta)")
+        for i in range(n_rate_update_b): 
+            print(f'{birthrate_updates_reaction[i]}, {birthrate_updates_reaction[i]+1}\t{birthrate_state_index[i]}\t{birthrate_updates_par[i]}')
 
     # format conversion
     reactions = np.array(reactions, dtype = np.int64)
@@ -227,14 +232,14 @@ def ODE_from_network(G):
         for index, row in edges_inrow.iterrows():
             in_term += f"+({str(row['source'])}_{node_type}*{float(row['rate'])})"
         
-        diff_exp += f"\t\t({var}*({birth_term}-{death_term}-{out_term})){in_term}, # Δ{var}\Δt\n"
+        diff_exp += f"\t\t# Δ{var}/Δt\n\t\t({var}*({birth_term}-{death_term}-{out_term})){in_term},\n"
 
     # set up function
-    fulltext = "global ODE_model\ndef ODE_model(t,z):\n"
+    fulltext = "global ODE_model\ndef ODE_model(t, z):\n"
 
     # set up tuple of variables
     vars_for_code = str((str(vars)[1:-1]).replace("'",""))
-    fulltext += f'\t{vars_for_code} = z'
+    fulltext += f'\t# variables (node name + wt/mt)\n\t{vars_for_code} = z'
     
     # set up how each variable changes
     fulltext += f"\n\treturn [\n{diff_exp}\t\t]"
