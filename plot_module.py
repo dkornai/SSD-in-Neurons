@@ -129,30 +129,22 @@ def plot_gillespie(
 
 
 def plot_network(G):
-    # Extract 'birth_type' values for node colors
-    birth_type_values = [G.nodes[node]['birth_type'] for node in G.nodes()]
-
     # Assign colors based on 'birth_type' attribute
     node_colors = ['lightblue' if G.nodes[node]['birth_type'] == 0 else 'lightgreen' if G.nodes[node]['birth_type'] == 1 else 'orange' for node in G.nodes()]
 
     pos = nx.spring_layout(G)
-    node_sizes = [G.nodes[node]['nss']*2 for node in G.nodes()]
     edge_widths = [G.edges[edge]['rate']*50 for edge in G.edges()]
 
     plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
 
     # Draw nodes with sizes and colors based on attributes
-    nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors, alpha=0.8)
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, alpha=0.8)
 
     # Draw edges with adjusted connectionstyle
     nx.draw_networkx_edges(G, pos, alpha=1, width=edge_widths, arrowstyle='->', connectionstyle='arc3,rad=0.1')
 
     # Draw node labels
     nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold')
-
-    ## Draw 'birth_type' values next to each node
-    #labels = {node: f"\n\n{G.nodes[node]['birth_type']}" for node in G.nodes()}
-    #nx.draw_networkx_labels(G, pos, labels, font_size=10, font_color='red', font_weight='bold')
 
     plt.axis('off')  # Hide the axis
     plt.show()  # Display the graph
