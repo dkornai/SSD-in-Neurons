@@ -28,6 +28,7 @@ def GILL_simulate(
         time_points:    np.ndarray,
         start_state:    list,
         replicates:     int = 100,
+        onedynamic:     bool = False,
         ) ->            np.ndarray:
     
     # create array for output
@@ -39,7 +40,8 @@ def GILL_simulate(
             gillespie_simulate(
                 gill_param, 
                 time_points, 
-                start_state)
+                start_state,
+                onedynamic)
         , 0, 1)
         
         print(f"{round(((i+1)/replicates)*100, 2)}% completed  ", end = "\r")

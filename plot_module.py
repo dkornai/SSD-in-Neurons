@@ -70,6 +70,10 @@ def plot_gillespie(
     n_vars = len(vars)
     n_comp = len(comp)
     
+    # separate out wt and mt counts
+    wt_counts = replicate_results[:,np.arange(0, n_vars, 2),:]
+    mt_counts = replicate_results[:,np.arange(1, n_vars, 2),:]
+
     # plot wildtype and mutant counts in each compartment over time
     mean_per_var_counts = []
     plt.subplots(figsize=(10, 5))
@@ -86,7 +90,7 @@ def plot_gillespie(
     plt.subplots(figsize=(10, 5))
     for i in range(n_comp):
         # calculate mean heteroplasmy as a mean of ratios
-        het = np.nanmean(replicate_results[:,(i*2)+1,:]/(replicate_results[:,(i*2)+1,:]+replicate_results[:,i*2,:]), axis = 0)
+        het = np.nanmean(mt_counts[:,i,:]/(mt_counts[:,i,:]+wt_counts[:,i,:]), axis = 0)
         mean_per_comp_het.append(het)
 
         plt.plot(time_points, het, label = f'{comp[i]} het', alpha = 0.7)
@@ -99,7 +103,7 @@ def plot_gillespie(
     mean_per_comp_eps = []
     plt.subplots(figsize=(10, 5))
     for i in range(n_comp):
-        eps = np.nanmean(replicate_results[:,(i*2)+1,:]*delta + replicate_results[:,i*2,:], axis = 0)
+        eps = np.nanmean(mt_counts[:,i,:]*delta + wt_counts[:,i,:], axis = 0)
         mean_per_comp_eps.append(eps)
         if min(eps) < min_eps: min_eps = min(eps)
         if max(eps) > max_eps: max_eps = max(eps)
@@ -123,8 +127,18 @@ def plot_gillespie(
         print(f'{comp[i]}\t{round(mean_per_comp_eps[i][-1], 4)}\t')
 
     print("\n> Change in mean heteroplasmy: ")
-    het_start = np.mean(np.array(mean_per_comp_het)[:,0], axis = 0); print("start:", round(het_start, 4))
-    het_final = np.mean(np.array(mean_per_comp_het)[:,-1], axis = 0); print("final:", round(het_final, 4))
+    # get the total sums across every compartment (keeps replicates and time seperate)
+    total_wt = np.sum(wt_counts, axis = 1)
+    total_mt = np.sum(mt_counts, axis = 1)
+
+    het_start = np.average(total_mt[:,0]/(total_mt[:,0]+total_wt[:,0]), 
+                           axis = 0, 
+                           weights=total_mt[:,0]*delta + total_wt[:,0])
+    print("start:", round(het_start, 4))
+    het_final = np.average(total_mt[:,-1]/(total_mt[:,-1]+total_wt[:,-1]), 
+                           axis = 0, 
+                           weights=total_mt[:,-1]*delta + total_wt[:,-1])
+    print("final:", round(het_final, 4))
     print("delta:", round(het_final-het_start, 4))
 
 

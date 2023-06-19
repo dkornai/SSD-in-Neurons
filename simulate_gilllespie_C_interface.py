@@ -67,12 +67,36 @@ _simulate.argtypes = [
     i8_1d,
     ] 
 
+
+_simulateOD = gillespie_simulate.simulate
+_simulateOD.restype = None
+_simulateOD.argtypes = [
+    f8_1d, 
+    i8,
+
+    i8, 
+    i8_1d, 
+    _2dp,
+    
+    i8, 
+    _2dp, 
+    f8_1d, 
+    i8_1d, 
+
+    i8,
+    _2dp, 
+    i8_1d,
+    i8_1d,
+    ] 
+
+
 #### SET UP PYTHON INTERFACE ####
 
 def gillespie_simulate(
         reactions_dict,
         time_points,     # list of points in time where system state should be recorded
-        sys_state        # state of the system (number of wt and mt in each compartment)
+        sys_state,       # state of the system (number of wt and mt in each compartment)
+        onedynamic = False
         ):
 
     ## UNPACK INPUT PARAMETERS ##
@@ -117,23 +141,43 @@ def gillespie_simulate(
     birthrate_state_index = update_rate_birth['birthrate_state_index']
 
     # run the c module
-    _simulate(
-        time_points,
-        n_time_points,
+    if onedynamic == False:
+        _simulate(
+            time_points,
+            n_time_points,
 
-        n_pops,
-        sys_state,
-        sys_state_sample_2dp,
+            n_pops,
+            sys_state,
+            sys_state_sample_2dp,
 
-        n_reactions,
-        reactions_2dp,
-        reaction_rates,
-        state_index,
+            n_reactions,
+            reactions_2dp,
+            reaction_rates,
+            state_index,
 
-        n_birthrate_updates,
-        birthrate_updates_par_2dp,
-        birthrate_updates_reaction,
-        birthrate_state_index,
-        )
+            n_birthrate_updates,
+            birthrate_updates_par_2dp,
+            birthrate_updates_reaction,
+            birthrate_state_index,
+            )
+    elif onedynamic == True:
+        _simulateOD(
+            time_points,
+            n_time_points,
+
+            n_pops,
+            sys_state,
+            sys_state_sample_2dp,
+
+            n_reactions,
+            reactions_2dp,
+            reaction_rates,
+            state_index,
+
+            n_birthrate_updates,
+            birthrate_updates_par_2dp,
+            birthrate_updates_reaction,
+            birthrate_state_index,
+            )
     
     return sys_state_sample
