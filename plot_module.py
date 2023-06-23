@@ -61,10 +61,10 @@ Plot the mean values across many replicate gillespie simulations of the system
 '''
 def plot_gillespie(
         replicate_results,  # variable values over time (number of wildtype and mutant in each compartment)
-        time_points,    # time points where system is sampled
-        delta,          # mutant deficiency, used in calculating effective population sizes
-        vars,           # name of the variables being tracked (compartment name + wt/mt)
-        comp            # name of the compartments (e.g. soma, axon, etc.)
+        time_points,        # time points where system is sampled
+        delta,              # mutant deficiency, used in calculating effective population sizes
+        vars,               # name of the variables being tracked (compartment name + wt/mt)
+        comp                # name of the compartments (e.g. soma, axon, etc.)
         ):
     
     n_vars = len(vars)

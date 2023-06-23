@@ -99,46 +99,32 @@ def gillespie_simulate(
         onedynamic = False
         ):
 
-    ## UNPACK INPUT PARAMETERS ##
-    # TIME POINTS
-    n_time_points = time_points.size
-
-
-    # SYSTEM STATE AND SYSTEM STATE SAMPLE
-    sys_state = np.array(deepcopy(sys_state), dtype=np.int64)
-
-    n_pops = sys_state.size
-
-    sys_state_sample = np.zeros((time_points.size, sys_state.size), dtype=np.int64, order = 'C')
-        # turn into array of 2d pointers
-    sys_state_sample_2dp = (sys_state_sample.__array_interface__['data'][0] + np.arange(sys_state_sample.shape[0])*sys_state_sample.strides[0]).astype(np.uintp)
-
-
-    # GILLESPIE REACTIONS
     gillespie_reactions = reactions_dict['gillespie']
-
-    n_reactions = gillespie_reactions['n_reactions']
-
-    reactions = gillespie_reactions['reactions']
-        # turn into array of 2d pointers
-    reactions_2dp = (reactions.__array_interface__['data'][0] + np.arange(reactions.shape[0])*reactions.strides[0]).astype(np.uintp)
-    
-    reaction_rates = gillespie_reactions['reaction_rates']
-
-    state_index = gillespie_reactions['state_index']
-
-    # BIRTHRATE UPDATES
     update_rate_birth = reactions_dict['update_rate_birth']
 
-    n_birthrate_updates = update_rate_birth['n_rate_update_birth']
+    ## UNPACK INPUT PARAMETERS ##
+    n_time_points               = int(time_points.size)
+    time_points                 = np.array(time_points, dtype=np.float64, order = 'C')
 
-    birthrate_updates_par = update_rate_birth['rate_update_birth_par']
-        # turn into array of 2d pointers
-    birthrate_updates_par_2dp = (birthrate_updates_par.__array_interface__['data'][0] + np.arange(birthrate_updates_par.shape[0])*birthrate_updates_par.strides[0]).astype(np.uintp)
+    n_pops                      = int(len(sys_state))
+    sys_state                   = np.array(deepcopy(sys_state), dtype=np.int64, order = 'C')
+    sys_state_sample            = np.zeros((time_points.size, sys_state.size), dtype=np.int64, order = 'C')
+    # turn into array of 2d pointers
+    sys_state_sample_2dp        = (sys_state_sample.__array_interface__['data'][0] + np.arange(sys_state_sample.shape[0])*sys_state_sample.strides[0]).astype(np.uintp)
     
-    birthrate_updates_reaction = update_rate_birth['rate_update_birth_reaction']
+    n_reactions                 = int(gillespie_reactions['n_reactions'])
+    reactions                   = np.array(gillespie_reactions['reactions'], dtype=np.int64, order = 'C')
+    # turn into array of 2d pointers
+    reactions_2dp               = (reactions.__array_interface__['data'][0] + np.arange(reactions.shape[0])*reactions.strides[0]).astype(np.uintp)
+    reaction_rates              = np.array(gillespie_reactions['reaction_rates'], dtype=np.float64, order = 'C')
+    state_index                 = np.array(gillespie_reactions['state_index'], dtype=np.int64, order = 'C')
 
-    birthrate_state_index = update_rate_birth['birthrate_state_index']
+    n_birthrate_updates         = int(update_rate_birth['n_rate_update_birth'])
+    birthrate_updates_par       = np.array(update_rate_birth['rate_update_birth_par'], dtype=np.float64, order = 'C')
+    # turn into array of 2d pointers
+    birthrate_updates_par_2dp   = (birthrate_updates_par.__array_interface__['data'][0] + np.arange(birthrate_updates_par.shape[0])*birthrate_updates_par.strides[0]).astype(np.uintp)
+    birthrate_updates_reaction  = np.array(update_rate_birth['rate_update_birth_reaction'], dtype=np.int64, order = 'C')
+    birthrate_state_index       = np.array(update_rate_birth['birthrate_state_index'], dtype=np.int64, order = 'C')
 
     # run the c module
     if onedynamic == False:
@@ -160,6 +146,7 @@ def gillespie_simulate(
             birthrate_updates_reaction,
             birthrate_state_index,
             )
+        
     elif onedynamic == True:
         _simulateOD(
             time_points,
