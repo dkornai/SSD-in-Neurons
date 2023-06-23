@@ -7,7 +7,10 @@ typedef double f8;
 typedef long int i8;
 
 // draw samples from an exponential with mean x
-double rand_exp(f8 x) {
+f8 rand_exp(
+    const f8    x
+    ) 
+{
     f8 u = rand() / (RAND_MAX + 1.0);
     return -x * log(1.0 - u);
 }
@@ -18,11 +21,16 @@ double rand_exp(f8 x) {
 //      element being the index of the outcome, and the value of the element 
 //      being the probability of that outcome. 
 //      
-i8 sample_discrete(f8* reaction_prob_arr_norm)
+i8 sample_discrete(
+    const f8*   reaction_prob_arr_norm
+    )
 {
-    f8 q = (f8) rand() / RAND_MAX; // random value between 0 and 1
+    
+    f8 q = rand() / RAND_MAX; // random value between 0 and 1
+    
     i8 i = 0;
     f8 p_sum = 0.0;
+    
     while (p_sum < q)
     {
         p_sum += reaction_prob_arr_norm[i];
