@@ -4,11 +4,11 @@
 
 **Reported values for half life:**
 
-- 20-25 days ([Frontiers | The relationship of alpha-synuclein to mitochondrial dynamics and quality control](https://doi.org/10.3389/fnmol.2022.947191))
+- 20-25 days ([The relationship of alpha-synuclein to mitochondrial dynamics and quality control](https://doi.org/10.3389/fnmol.2022.947191))
 
-- 7-28 days ([Mitochondria and ageing: winning and losing in the numbers game - Passos - 2007 - BioEssays - Wiley Online Library](https://doi.org/10.1002/bies.20634))
+- 7-28 days ([Mitochondria and ageing: winning and losing in the numbers game](https://doi.org/10.1002/bies.20634))
 
-- 0.25 days ([DOI: 10.1126/sciadv.abf6580](https://doi.org/10.1126/sciadv.abf6580))
+- 0.25 days ([Longitudinal tracking of neuronal mitochondria delineates PINK1/Parkin-dependent mechanisms of mitochondrial recycling and degradation](https://doi.org/10.1126/sciadv.abf6580))
 
 ----
 
@@ -24,9 +24,11 @@ The outermost region (0.25-28 days) is chosen, and converted to rates/day using 
 
 **Reported values:**
 
-- 0.1 μm/sec minimum, 0.5 μm/sec typical for anterograde, 0.25 μm/sec typical for retrograde ([Frontiers | Dynamics of Mitochondrial Transport in Axons](https://doi.org/10.3389/fncel.2016.00123))
+- 0.1 μm/sec minimum, 0.5 μm/sec typical for anterograde, 0.25 μm/sec typical for retrograde ([Dynamics of Mitochondrial Transport in Axons](https://doi.org/10.3389/fncel.2016.00123))
 
-- 1.02 μm/sec peak for anterograde, 1.41 μm/sec peak for retrograde, 87% immotile (https://doi.org/10.1038/nmeth1055)
+- 1.02 μm/sec peak for anterograde, 1.41 μm/sec peak for retrograde, 87% immotile, 1.9/1 anterograde/retrograde flux ([Imaging axonal transport of mitochondria in vivo](https://doi.org/10.1038/nmeth1055))
+
+- 74% immotile, 2.1/1 anterograde/retrograde flux ([Mitostasis in Neurons: Maintaining Mitochondria in an Extended Cellular Architecture](https://doi.org/10.1016/j.neuron.2017.09.055 "Persistent link using digital object identifier"))
 
 ----
 
@@ -46,16 +48,14 @@ The hopping rates corresponding to this speed depend on the total length of the 
 | **gamma anterograde** | 86.4 /day | 432 /day | 1218 /day |
 | **gamma retrograde**  | 86.4 /day | 216 /day | 881 /day  |
 
-Accounting for the fact that a large proportion (>80%) are immotile, the average speed is scaled accordingly.
+A large proportion (~75-85%) are immotile, and motility is uneven between anterograde and retrograde populations with a relative flux of about 2/1. Thus overall, ~8% are motile in the retrograde direction, and ~16% are motile in the anterograde direction
 
 #### Immotility adjusted Hopping rates for nodes separated by 100 μm:
 
-|                       | minimum    | typical   | maximum    |
-| --------------------- | ---------- | --------- | ---------- |
-| **gamma anterograde** | 17.28 /day | 86.4 /day | 243.6 /day |
-| **gamma retrograde**  | 17.28 /day | 43.2 /day | 176.2 /day |
-
-
+|                       | minimum   | typical   | maximum    |
+| --------------------- | --------- | --------- | ---------- |
+| **gamma anterograde** | 13.8 /day | 69.1 /day | 194.9 /day |
+| **gamma retrograde**  | 6.9 /day  | 17.3 /day | 70.5 /day  |
 
 If the distance between nodes is larger or smaller, scale these values accordingly (e.g. For nodes separated by 500 μm, minimum value would be 3.46 /day )
 
