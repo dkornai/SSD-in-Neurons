@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
+import pydot
+from networkx.drawing.nx_pydot import graphviz_layout
 
 '''
 Plot the results of a numerical solution to an ODE.
@@ -21,7 +23,7 @@ def plot_ODE(
     for i in range(n_vars):
         plt.plot(time_points, results[i], label = vars[i], alpha = 0.7)
     plt.legend()
-    plt.title('wt and mt counts in each compartment over time')
+    plt.title('ODE: wt and mt counts in each compartment over time')
 
     # plot heteroplasmy levels in each compartment over time
     plt.subplots(figsize=(10, 5))
@@ -30,7 +32,7 @@ def plot_ODE(
         plt.plot(time_points, het, label = f'{comp[i]} het', alpha = 0.7)
     plt.ylim([0, 1])
     plt.legend()
-    plt.title('heteroplasmy in each compartment over time')
+    plt.title('ODE: heteroplasmy in each compartment over time')
 
     # plot effective population sizes over time
     plt.subplots(figsize=(10, 5))
@@ -43,7 +45,7 @@ def plot_ODE(
         plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size', alpha = 0.7)
     plt.ylim([round(min_eps-5,0), round(max_eps+5,0)])
     plt.legend()
-    plt.title('effective population size in each compartment over time')
+    plt.title('ODE: effective population size in each compartment over time')
     plt.show()
 
     # print parameter values in the final time point
@@ -84,7 +86,7 @@ def plot_gillespie(
 
         plt.plot(time_points, counts, label = vars[i], alpha = 0.7)
     plt.legend()
-    plt.title('mean wt and mt counts in each compartment over time')
+    plt.title('SDE: mean wt and mt counts in each compartment over time')
 
     # plot heteroplasmy levels in each compartment over time
     mean_per_comp_het = []
@@ -97,7 +99,7 @@ def plot_gillespie(
         plt.plot(time_points, het, label = f'{comp[i]} het', alpha = 0.7)
     plt.ylim([0, 1])
     plt.legend()
-    plt.title('mean heteroplasmy in each compartment over time')
+    plt.title('SDE: mean heteroplasmy in each compartment over time')
 
     # plot effective population sizes over time
     min_eps = 100000; max_eps = 0
@@ -112,7 +114,7 @@ def plot_gillespie(
         plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size', alpha = 0.7)
     plt.ylim([round(min_eps-5,0), round(max_eps+5,0)])
     plt.legend()
-    plt.title('mean effective population size in each compartment over time')
+    plt.title('SDE: mean effective population size in each compartment over time')
     plt.show()
 
     # print parameter values in the final time point
@@ -144,12 +146,13 @@ def plot_gillespie(
     print("delta:", round(het_final-het_start, 4))
 
 
+# plotting the network 
 plot_col_dict = {0:'lightblue', 1:'lightgreen', 2:'orange'}
 def plot_network(G):
     # Assign colors based on 'birth_type' attribute
     node_colors = [plot_col_dict[G.nodes[node]["birth_type"]] for node in G.nodes()]
 
-    pos = nx.spring_layout(G)
+    pos = graphviz_layout(G, root = 'N0', prog="neato")
     edge_widths = [G.edges[edge]['rate'] for edge in G.edges()]
 
     plt.figure(figsize=(10, 8))  # Adjust the figure size as needed

@@ -159,12 +159,6 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bit \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/pstl/glue_numeric_defs.h \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/pstl/execution_defs.h \
-  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/stdexcept \
-  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/exception \
-  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/exception_ptr.h \
-  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/cxxabi_init_exception.h \
-  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/typeinfo \
-  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/nested_exception.h \
   /home/daniel/anaconda3/include/pybind11/pybind11.h \
   /home/daniel/anaconda3/include/pybind11/detail/class.h \
   /home/daniel/anaconda3/include/pybind11/attr.h \
@@ -290,6 +284,11 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
   /home/daniel/anaconda3/include/python3.9/pythread.h \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/cstddef \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/cstring \
+  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/exception \
+  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/exception_ptr.h \
+  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/cxxabi_init_exception.h \
+  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/typeinfo \
+  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/nested_exception.h \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/forward_list \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/forward_list.h \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/ext/aligned_buffer.h \
@@ -315,6 +314,7 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/atomic_lockfree_defines.h \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/backward/auto_ptr.h \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/pstl/glue_memory_defs.h \
+  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/stdexcept \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/typeindex \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/unordered_map \
   /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/hashtable.h \
@@ -546,11 +546,8 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
   /usr/include/eigen3/Eigen/src/SparseCore/TriangularSolver.h \
   /usr/include/eigen3/Eigen/src/SparseCore/SparsePermutation.h \
   /usr/include/eigen3/Eigen/src/SparseCore/SparseFuzzy.h \
-  /usr/include/eigen3/Eigen/src/SparseCore/SparseSolverBase.h \
-  /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/iostream
+  /usr/include/eigen3/Eigen/src/SparseCore/SparseSolverBase.h
 
-
-/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/iostream:
 
 /usr/include/eigen3/Eigen/src/SparseCore/SparseFuzzy.h:
 
@@ -830,6 +827,10 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
 
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/hashtable.h:
 
+/usr/include/eigen3/Eigen/src/Core/CwiseNullaryOp.h:
+
+/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/stdexcept:
+
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/pstl/glue_memory_defs.h:
 
 /usr/include/eigen3/Eigen/src/SparseCore/CompressedStorage.h:
@@ -873,6 +874,14 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/forward_list.h:
 
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/forward_list:
+
+/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/typeinfo:
+
+/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/system_error:
+
+/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/exception_ptr.h:
+
+/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/exception:
 
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/shared_ptr.h:
 
@@ -935,20 +944,6 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
 /usr/include/eigen3/Eigen/src/Core/util/IndexedViewHelper.h:
 
 /home/daniel/anaconda3/include/python3.9/pylifecycle.h:
-
-/home/daniel/anaconda3/include/python3.9/pythonrun.h:
-
-/usr/include/eigen3/Eigen/src/SparseCore/SparseSolverBase.h:
-
-/home/daniel/anaconda3/include/python3.9/pyarena.h:
-
-/usr/include/eigen3/Eigen/src/plugins/ArrayCwiseUnaryOps.h:
-
-/home/daniel/anaconda3/include/python3.9/context.h:
-
-/usr/include/eigen3/Eigen/src/Core/arch/SSE/TypeCasting.h:
-
-/home/daniel/anaconda3/include/python3.9/pythread.h:
 
 /usr/include/eigen3/Eigen/src/Core/Redux.h:
 
@@ -1160,6 +1155,8 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
 
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/stl_iterator.h:
 
+/home/daniel/anaconda3/include/python3.9/pythonrun.h:
+
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/shared_ptr_atomic.h:
 
 /home/daniel/anaconda3/include/python3.9/modsupport.h:
@@ -1207,6 +1204,10 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/cmath:
 
 /home/daniel/anaconda3/include/python3.9/fileobject.h:
+
+/usr/include/eigen3/Eigen/src/SparseCore/SparseSolverBase.h:
+
+/home/daniel/anaconda3/include/python3.9/pyarena.h:
 
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/sysroot/usr/include/sys/cdefs.h:
 
@@ -1370,7 +1371,17 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
 
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/sysroot/usr/include/libio.h:
 
+/usr/include/eigen3/Eigen/src/plugins/ArrayCwiseUnaryOps.h:
+
+/home/daniel/anaconda3/include/python3.9/context.h:
+
 /home/daniel/anaconda3/x86_64-conda-linux-gnu/sysroot/usr/include/bits/stdio_lim.h:
+
+/usr/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h:
+
+/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/nested_exception.h:
+
+/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/pstl/glue_numeric_defs.h:
 
 /home/daniel/anaconda3/include/python3.9/cpython/dictobject.h:
 
@@ -1421,24 +1432,6 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
 /home/daniel/anaconda3/lib/gcc/x86_64-conda-linux-gnu/11.2.0/include/emmintrin.h:
 
 /home/daniel/anaconda3/lib/gcc/x86_64-conda-linux-gnu/11.2.0/include/mmintrin.h:
-
-/usr/include/eigen3/Eigen/src/Core/CwiseNullaryOp.h:
-
-/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/stdexcept:
-
-/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/exception:
-
-/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/system_error:
-
-/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/exception_ptr.h:
-
-/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/typeinfo:
-
-/usr/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h:
-
-/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/pstl/glue_numeric_defs.h:
-
-/home/daniel/anaconda3/x86_64-conda-linux-gnu/include/c++/11.2.0/bits/nested_exception.h:
 
 /home/daniel/anaconda3/include/pybind11/detail/common.h:
 
@@ -1625,3 +1618,7 @@ CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o: ../simulate_gillespie_cpp
 /home/daniel/anaconda3/include/python3.9/namespaceobject.h:
 
 /home/daniel/anaconda3/include/python3.9/picklebufobject.h:
+
+/usr/include/eigen3/Eigen/src/Core/arch/SSE/TypeCasting.h:
+
+/home/daniel/anaconda3/include/python3.9/pythread.h:

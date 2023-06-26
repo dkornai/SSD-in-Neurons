@@ -1,5 +1,8 @@
 import numpy as np
 
+
+
+
 def get_result_statistics(
         replicate_results,  # variable values over time (number of wildtype and mutant in each compartment)
         time_points,        # time points where system is sampled
@@ -34,4 +37,4 @@ def get_result_statistics(
     # get the total heteroplasmies in the last time point
     final_total_het = total_het[:,-1]
     
-    print(final_total_het)
+    return final_total_het

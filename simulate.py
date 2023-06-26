@@ -39,6 +39,7 @@ def GILL_simulate(
     state_index         = np.array(gill_param['gillespie']['state_index'], dtype=np.int64)
     reactions           = np.array(gill_param['gillespie']['reactions'], dtype=np.int64, order = 'F')
     birth_update_par    = np.array(gill_param['update_rate_birth']['rate_update_birth_par'][0], dtype = np.float64)
+    n_birth_updates     = int(len(gill_param['update_rate_birth']['rate_update_birth_par'])*2)
 
     print('simulating...')
 
@@ -49,7 +50,7 @@ def GILL_simulate(
         sys_state_sample = np.zeros((time_points.size, sys_state.size), dtype = np.int64, order = 'F')
 
         # run c++ module
-        libgillespie.simulate(time_points, sys_state, sys_state_sample, reactions, react_rates, state_index, birth_update_par)
+        libgillespie.simulate(time_points, sys_state, sys_state_sample, reactions, react_rates, state_index, birth_update_par, n_birth_updates)
         
         # transpose and write results
         replicate_results[i, :, :] = sys_state_sample.transpose(1,0)
