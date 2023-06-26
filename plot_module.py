@@ -44,6 +44,7 @@ def plot_ODE(
     plt.ylim([round(min_eps-5,0), round(max_eps+5,0)])
     plt.legend()
     plt.title('effective population size in each compartment over time')
+    plt.show()
 
     # print parameter values in the final time point
     print("> Final counts of mt and wt in each compartment:")
@@ -112,6 +113,7 @@ def plot_gillespie(
     plt.ylim([round(min_eps-5,0), round(max_eps+5,0)])
     plt.legend()
     plt.title('mean effective population size in each compartment over time')
+    plt.show()
 
     # print parameter values in the final time point
     print("> Final mean counts of mt and wt in each compartment:")
@@ -142,12 +144,13 @@ def plot_gillespie(
     print("delta:", round(het_final-het_start, 4))
 
 
+plot_col_dict = {0:'lightblue', 1:'lightgreen', 2:'orange'}
 def plot_network(G):
     # Assign colors based on 'birth_type' attribute
-    node_colors = ['lightblue' if G.nodes[node]['birth_type'] == 0 else 'lightgreen' if G.nodes[node]['birth_type'] == 1 else 'orange' for node in G.nodes()]
+    node_colors = [plot_col_dict[G.nodes[node]["birth_type"]] for node in G.nodes()]
 
     pos = nx.spring_layout(G)
-    edge_widths = [G.edges[edge]['rate']*50 for edge in G.edges()]
+    edge_widths = [G.edges[edge]['rate'] for edge in G.edges()]
 
     plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
 

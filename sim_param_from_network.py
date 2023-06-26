@@ -62,7 +62,7 @@ def transp_react(n_pops, source_i, dest_i):
 
 
 #### GENERATE THE HELPER DATASTRUCTURES FOR THE C MODULE THAT DOES THE GILLESPIE SIMULATION ####
-def gillespie_reaction_dict_from_network(G):
+def gillespie_param_from_network(G, prnt=True):
     df, df_edges = dataframes_from_network(G, prnt=False)
     
     node_names_list = list(G.nodes())
@@ -143,16 +143,17 @@ def gillespie_reaction_dict_from_network(G):
             state_index.append(src_i)
 
     # printout of results
-    print("> Reactions:")
-    print("react.#\tstate i\ttype\trate\tupdate to system")
-    for i in range(n_reactions): 
-        print(f'{i}\t{state_index[i]}\t{reaction_types[i]}\t{reaction_rates[i]}\t{reactions[i]}')
+    if prnt == True:
+        print("\n> Reactions:")
+        print("react.#\tstate i\ttype\trate\tupdate to system")
+        for i in range(n_reactions): 
+            print(f'{i}\t{state_index[i]}\t{reaction_types[i]}\t{reaction_rates[i]}\t{reactions[i]}')
 
-    if n_rate_update_b > 0:
-        print("\n> Dynamic birth rates:")
-        print("react.#\tstate i\tpar(c_b, mu, nss, delta)")
-        for i in range(n_rate_update_b): 
-            print(f'{birthrate_updates_reaction[i]}, {birthrate_updates_reaction[i]+1}\t{birthrate_state_index[i]}\t{birthrate_updates_par[i]}')
+        if n_rate_update_b > 0:
+            print("\n> Dynamic birth rates:")
+            print("react.#\tstate i\t[c_b, mu, nss, delta]")
+            for i in range(n_rate_update_b): 
+                print(f'{birthrate_updates_reaction[i]}, {birthrate_updates_reaction[i]+1}\t{birthrate_state_index[i]}\t{birthrate_updates_par[i]}')
 
     # format conversion
     reactions = np.array(reactions, dtype = np.int64)
