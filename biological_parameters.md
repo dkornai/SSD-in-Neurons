@@ -4,11 +4,13 @@
 
 **Reported values for half life:**
 
-- 20-25 days ([The relationship of alpha-synuclein to mitochondrial dynamics and quality control](https://doi.org/10.3389/fnmol.2022.947191))
+- 20-25 days (rat) ([The relationship of alpha-synuclein to mitochondrial dynamics and quality control](https://doi.org/10.3389/fnmol.2022.947191))
 
-- 7-28 days ([Mitochondria and ageing: winning and losing in the numbers game](https://doi.org/10.1002/bies.20634))
+- 7-28 days (rat) ([Mitochondria and ageing: winning and losing in the numbers game](https://doi.org/10.1002/bies.20634))
 
-- 0.25 days ([Longitudinal tracking of neuronal mitochondria delineates PINK1/Parkin-dependent mechanisms of mitochondrial recycling and degradation](https://doi.org/10.1126/sciadv.abf6580))
+- 0.25 days (mice) ([Longitudinal tracking of neuronal mitochondria delineates PINK1/Parkin-dependent mechanisms of mitochondrial recycling and degradation](https://doi.org/10.1126/sciadv.abf6580))
+
+- 1.5 days (flies) ([Modeling mitochondrial dynamics during in vivo axonal elongation - ScienceDirect](https://www.sciencedirect.com/science/article/pii/S0022519308004724?casa_token=rPmBGT5oZ3MAAAAA:pgTQ5LZelA085SZirV5r8i1VHXZUGCex1t-3iyHx8rMUPyqlIyGASAe_Y1IDSg-y3qAklEuuXg))
 
 ----
 
@@ -60,3 +62,14 @@ A large proportion (~75-85%) are immotile, and motility is uneven between antero
 If the distance between nodes is larger or smaller, scale these values accordingly (e.g. For nodes separated by 500 μm, minimum value would be 3.46 /day )
 
 ### 3) birth rate ()
+
+
+
+# mitochondrial distribution
+
+| parameter            | ratio in soma | ratio in axon | ratio in dendrite |
+| -------------------- | ------------- | ------------- | ----------------- |
+| mitochondrial volume | 0.41          | 0.15          | 0.44              |
+| cell volume          | 0.39          | 0.23          | 0.38              |
+
+Source: [A Quantitative Study on the Distribution of Mitochondria in the Neuropil of the Juvenile Rat Somatosensory Cortex]("https://academic.oup.com/cercor/article/28/10/3673/5060262")

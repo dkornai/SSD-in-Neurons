@@ -3,7 +3,7 @@ import networkx as nx
 import pandas as pd
 import numpy as np; np.set_printoptions(suppress=True)
 
-def dataframes_from_network(G, prnt = True):
+def dataframes_from_network(G, prnt = False):
     
     # Extract node attributes into a dictionary
     node_attributes = {node: G.nodes[node] for node in G.nodes()}
@@ -155,6 +155,7 @@ def gillespie_param_from_network(G, prnt=True):
             print("react.#\tstate i\t[c_b, mu, nss, delta]")
             for i in range(n_rate_update_b): 
                 print(f'{birthrate_updates_reaction[i]}, {birthrate_updates_reaction[i]+1}\t{birthrate_state_index[i]}\t{birthrate_updates_par[i]}')
+        print("")
 
     # format conversion
     reactions = np.array(reactions, dtype = np.int64)
@@ -184,7 +185,7 @@ This is a very very very extremely hacky function that works by collecting the p
 of the differential equations from the parameters encoded in the network, uses this to make
 a text python program, and then evaluates this python program and returns the output. 
 '''
-def ODE_from_network(G, prnt = True):
+def ODE_from_network(G, prnt = False):
     # collect data needed to generate the code
     nodenames, compartments = names_from_network(G)
     df, df_edges = dataframes_from_network(G, prnt=False) 

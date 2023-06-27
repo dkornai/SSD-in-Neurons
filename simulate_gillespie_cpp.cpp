@@ -137,6 +137,7 @@ void simulate(
                     birth_rate = mu + c_b*(nss-sys_state[j]-(delta*sys_state[j+1]));
                     if (birth_rate < 0) // check for negative rates (possible if e.p.s. > nss)
                         birth_rate = 0; 
+                    
                     react_rates[j] = react_rates[j+1] = birth_rate; // set corresponding birth rates for the nodes
                 }
             }

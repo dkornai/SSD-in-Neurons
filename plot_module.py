@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
-import pydot
 from networkx.drawing.nx_pydot import graphviz_layout
 
 '''
@@ -153,7 +152,12 @@ def plot_network(G):
     node_colors = [plot_col_dict[G.nodes[node]["birth_type"]] for node in G.nodes()]
 
     pos = graphviz_layout(G, root = 'N0', prog="neato")
+    
+    # get edge widths based on rates, and scale for display
     edge_widths = [G.edges[edge]['rate'] for edge in G.edges()]
+    edge_widths = np.array(edge_widths)
+    edge_widths = np.interp(edge_widths, (edge_widths.min(), edge_widths.max()), (0.5, 3))
+    edge_widths = list(edge_widths)
 
     plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
 
@@ -164,7 +168,7 @@ def plot_network(G):
     nx.draw_networkx_edges(G, pos, alpha=1, width=edge_widths, arrowstyle='->', connectionstyle='arc3,rad=0.1')
 
     # Draw node labels
-    nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold')
+    nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold', font_color='r')
 
     plt.axis('off')  # Hide the axis
     plt.show()  # Display the graph
