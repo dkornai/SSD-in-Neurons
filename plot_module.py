@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 from networkx.drawing.nx_pydot import graphviz_layout
-
+from networkx.drawing.nx_agraph import to_agraph 
 '''
 Plot the results of a numerical solution to an ODE.
 '''
@@ -172,3 +172,56 @@ def plot_network(G):
 
     plt.axis('off')  # Hide the axis
     plt.show()  # Display the graph
+
+
+
+
+
+# node colors, xy coordinates, and radii from real data
+swc_color_dict = {1:'red', 2:'blue', 3:'limegreen', 4:'limegreen'}
+def draw_helpers(
+        G:              nx.Graph
+        ):
+
+    node_colors = [swc_color_dict[data['nodetype']] for node, data in G.nodes(data=True)]
+        
+    xy_coordinates = {node:data['xy'] for node, data in G.nodes(data=True)}
+
+    node_radius = np.array([data['radius'] for node, data in G.nodes(data=True)])
+    node_radius = node_radius*(5/np.min(node_radius)) # scale for display such that max radius is 5
+    
+    return node_colors, xy_coordinates, node_radius
+
+def subset_layout(G):
+    # drawing using layout that shows structure
+    A = to_agraph(G) # Convert the networkx graph to a pygraphviz graph
+    
+    # get the xy coordinates from the neato layout engine
+    A.graph_attr.update(model='subset')
+    A.layout(prog='neato')
+    positions = {}
+    for node in A.nodes():
+        x, y = map(float, node.attr['pos'].split(','))
+        positions[int(node)] = (x, y)
+
+    return positions
+
+# plot a network derived from the swm file corresponding to a real neuron
+def plot_neuron_graph(
+        G:              nx.Graph
+        ):
+    
+    node_colors, xy_coordinates, node_radius = draw_helpers(G)
+
+    # drawing using real xy coordinates from swm file
+    fig, ax = plt.subplots(figsize=(10, 10))
+    nx.draw(G, pos=xy_coordinates, node_size=node_radius, ax=ax, node_color = node_colors)
+    
+
+    # drawing using layout that shows structure
+    A = to_agraph(G) # Convert the networkx graph to a pygraphviz graph
+    
+    # get the xy coordinates from the neato layout engine
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    nx.draw(G, pos=subset_layout(G), node_size=node_radius, ax=ax, node_color = node_colors)
