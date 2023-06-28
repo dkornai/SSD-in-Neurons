@@ -1,12 +1,18 @@
+'''
+THIS MODULE CONTAINS FUNCTIONS TO SIMULATE THE NETWORK OF REACTIONS
+'''
+
 from typing import Callable
 import numpy as np; np.set_printoptions(suppress=True)
-import pandas as pd
+from multiprocessing.pool import Pool
+from tqdm import tqdm
+
 import scipy.integrate as integrate
 
 import libgillespie
 
 # wrapper for the ode model
-def ODE_simulate(
+def simulate_ode(
         ODE_model:      Callable, 
         time_points:    np.ndarray,
         start_state:    list,
@@ -22,8 +28,37 @@ def ODE_simulate(
     
     return sol.y
 
-# wrapper for the gillespie 
-def GILL_simulate(
+
+# wrapper for the c++ gillespie simulator module
+def libgillespie_wrapper(
+        vartup:         tuple[np.ndarray, list, np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]
+        ) ->            np.ndarray:
+
+    # unpack tuple of variables
+    time_points, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates = vartup
+    
+    # create arrays which will be modified in place
+    sys_state           = np.array(start_state, dtype=np.int64)
+    sys_state_sample    = np.zeros((time_points.size, sys_state.size), dtype = np.int64, order = 'F')
+
+    # run c++ module, which modifies 'sys_state_sample' in place
+    libgillespie.simulate(
+        time_points, 
+        sys_state, 
+        sys_state_sample, 
+        reactions, 
+        react_rates, 
+        state_index, 
+        birth_update_par, 
+        n_birth_updates
+        )
+
+
+    # transpose and return 
+    return sys_state_sample.transpose(1,0)
+
+# wrapper to simulate using gillespie
+def simulate_gillespie(
         gill_param:     dict,
         time_points:    np.ndarray,
         start_state:    list,
@@ -42,19 +77,22 @@ def GILL_simulate(
     n_birth_updates     = int(len(gill_param['update_rate_birth']['rate_update_birth_par'])*2)
 
     print('simulating...')
+    pbar = tqdm(total=replicates)
 
-    for i in range(replicates):
-
-        # create arrays which will be modified in place
-        sys_state   = np.array(start_state, dtype=np.int64)
-        sys_state_sample = np.zeros((time_points.size, sys_state.size), dtype = np.int64, order = 'F')
-
-        # run c++ module
-        libgillespie.simulate(time_points, sys_state, sys_state_sample, reactions, react_rates, state_index, birth_update_par, n_birth_updates)
+    with Pool() as pool:
+        # prepare arguments as list of tuples
+        param = [(time_points, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates) for _ in range(replicates)]
         
-        # transpose and write results
-        replicate_results[i, :, :] = sys_state_sample.transpose(1,0)
-        
-        print(f"{round(((i+1)/replicates)*100, 2)}% completed  ", end = "\r")
+        # make list that unordered results will be deposited to
+        pool_results = []
+
+        # execute tasks
+        for result in pool.imap_unordered(libgillespie_wrapper, param):
+            pool_results.append(result)
+            pbar.update(1)
+
+        # write to output array
+        for i in range(replicates): replicate_results[i,:,:] = pool_results[i]
+
 
     return replicate_results
