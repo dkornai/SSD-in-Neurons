@@ -5,7 +5,7 @@ def sim_helpers_from_network(
         network:        nx.DiGraph, 
         start_pop:      list[int, int],
         ) ->            tuple[list[str], list[str], list[int]]:
-
+    
     # generate names of variables and node
     vars, node_labels = names_from_network(network)
 
@@ -54,7 +54,7 @@ def net_gen_hub_ring(
 def net_gen_line_chain(
         n_nodes:        int,
         bio_param:      dict,
-        line_type:     str,
+        line_type:      str,
         attach_graph:   nx.DiGraph,  # graph to which the chain should be attached
         attach_node:    str,         # name of the node to which the chain should be attached
         )->             nx.DiGraph:
