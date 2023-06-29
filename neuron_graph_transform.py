@@ -38,6 +38,9 @@ def ladderize(
         G:      nx.DiGraph
         ) ->    nx.DiGraph:
     
+    direction_forward = {"direction": "forward"}
+    direction_reverse = {"direction": "reverse"}
+
     L = nx.DiGraph()
 
     for node, data in G.nodes(data=True):
@@ -46,15 +49,19 @@ def ladderize(
         L.add_node(f"{node}R", **data)
 
     for u, v, data in G.edges(data=True):
+        
+        combined_data_forward = {**data, **direction_forward}
+        combined_data_reverse = {**data, **direction_reverse}
+
         # For each edge, add an edge from the forward node of the source to the forward node of the target
         # and from the reverse node of the source to the reverse node of the target in the ladder graph
-        L.add_edge(f"{u}F", f"{v}F", **data)
-        L.add_edge(f"{v}R", f"{u}R", **data)
+        L.add_edge(f"{u}F", f"{v}F", **combined_data_forward)
+        L.add_edge(f"{v}R", f"{u}R", **combined_data_reverse)
 
     for node in G.nodes():
         # For each node, add an edge between the forward and the reverse node in the ladder graph
-        L.add_edge(f"{node}F", f"{node}R")
-        L.add_edge(f"{node}R", f"{node}F")
+        L.add_edge(f"{node}F", f"{node}R", edgetype = 5)
+        L.add_edge(f"{node}R", f"{node}F", edgetype = 5)
     
     # Now, L is the ladder graph of G
     return L    
@@ -76,13 +83,14 @@ def circularize(
     C = nx.DiGraph()
     
     # add in the root nodes of each subgraph
-    node_data = G.nodes[root_node]
+    node_data = G.nodes[root_node]; subgraph_type = node_data['nodetype'] # get the type (soma or axon)
+    
     C.add_node(f"{root_node}F", **node_data)
     C.add_node(f"{root_node}R", **node_data)
     
     # if the graph has only one node, create a forward and a reverse node and connect them
     if len(G.nodes) == 1:
-        C.add_edge(f"{root_node}F", f"{root_node}R")
+        C.add_edge(f"{root_node}F", f"{root_node}R", edgetype = subgraph_type)
     
     # if the graph has more than one node, traverse the paths from the root 
     else:
@@ -104,8 +112,11 @@ def circularize(
                 
 
             # Connect forward and reverse strands at the leaf nodes
-            C.add_edge(f"{path[-1]}F", f"{path[-1]}R")
+            C.add_edge(f"{path[-1]}F", f"{path[-1]}R", edgetype = subgraph_type)
     
+    # add edge attribute showing forward transport direction
+    nx.set_edge_attributes(C, 'forward', 'direction')
+
     # Now, C is the circularized graph of G
     return C
 
@@ -113,6 +124,9 @@ def circularize(
 def bidirectionalize(
         G:      nx.DiGraph
         ) ->    nx.DiGraph:
+    
+    direction_forward = {"direction": "forward"}
+    direction_reverse = {"direction": "reverse"}
     
     # Create an empty directed graph for the bidirectional graph
     B = nx.DiGraph()
@@ -123,9 +137,12 @@ def bidirectionalize(
 
     # Iterate over the edges in the original graph
     for u, v, data in G.edges(data=True):
+        combined_data_forward = {**data, **direction_forward}
+        combined_data_reverse = {**data, **direction_reverse}
+        
         # For each edge, add an edge and its reverse to the bidirectional graph
-        B.add_edge(u, v, **data)
-        B.add_edge(v, u, **data)
+        B.add_edge(u, v, **combined_data_forward)
+        B.add_edge(v, u, **combined_data_reverse)
 
     # Now, B is the bidirectional graph of G
     return B
@@ -188,16 +205,26 @@ def subgraph_remerge(
         subgraph_attach_nodes:  list[str]
         ) ->                    nx.DiGraph:
     
+    # find the type (axon or dendrite) of the subgraph
+    subgraph_type = [data for node, data in transformed_subgraph.nodes(data=True)][0]['nodetype']
+    
+    # merge full graph and subgraph
     full_graph = nx.union(full_graph, transformed_subgraph)
     
+
     # ladderized and circularized graphs have their forward and reverse sides connected to the target soma node
     if   len(subgraph_attach_nodes) == 2:
-        full_graph.add_edge(soma_attach_node, subgraph_attach_nodes[0])
-        full_graph.add_edge(subgraph_attach_nodes[1], soma_attach_node)
+        full_graph.add_edge(soma_attach_node, subgraph_attach_nodes[0],
+                            edgetype = subgraph_type, direction = 'forward')
+        full_graph.add_edge(subgraph_attach_nodes[1], soma_attach_node,
+                            edgetype = subgraph_type, direction = 'reverse')
+        
     # bidirectionailzed graphs connect their root to the target soma node
     elif len(subgraph_attach_nodes) == 1:
-        full_graph.add_edge(soma_attach_node, subgraph_attach_nodes[0])
-        full_graph.add_edge(subgraph_attach_nodes[0], soma_attach_node)
+        full_graph.add_edge(soma_attach_node, subgraph_attach_nodes[0],
+                            edgetype = subgraph_type, direction = 'forward')
+        full_graph.add_edge(subgraph_attach_nodes[0], soma_attach_node,
+                            edgetype = subgraph_type, direction = 'reverse')
         
     return full_graph
 
@@ -211,8 +238,7 @@ def neuron_graph_transform(
     assert transform_type in ['circle','ladder','bidirect'], 'transform_type must be "circle", "ladder", or "bidirect"'
     
     G = deepcopy(input_G) # deepcopy to avoid modifying the source graph
-    print(f"> the undirected input graph has {len(list(G.nodes()))} nodes, and {len(list(G.edges()))} edges")
-
+    print(f"> The undirected input graph has {len(list(G.nodes()))} nodes, and {len(list(G.edges()))} edges,", end = ' ')
 
     # isolate subgraph roots (first node of each axon and dendrite)
     subgraph_roots = list(nx.descendants_at_distance(G, '1', 1))
@@ -228,7 +254,7 @@ def neuron_graph_transform(
     
     # check the number and types of subgraphs
     subgraph_types = [nodetype_dict[G.nodes()[subgraph[0]]['nodetype']] for subgraph in subgraphs]
-    print(f'> identified {n_subgraphs} subgraph(s):')
+    print(f'and {n_subgraphs} subgraph(s):')
     print(f"{str([f'{subgraph_types[i]} with {len(subgraphs[i])} nodes' for i in range(n_subgraphs)])[1:-1]}")
 
 
@@ -250,7 +276,82 @@ def neuron_graph_transform(
         neuron_g = subgraph_remerge(neuron_g, transformed_subgraph, soma_attach_node, nodes_to_connect)
 
 
-    print(f"> the output directed graph has {len(list(neuron_g.nodes()))} nodes, and {len(list(neuron_g.edges()))} edges")
+    print(f"> the directed output graph has {len(list(neuron_g.nodes()))} nodes, and {len(list(neuron_g.edges()))} edges")
 
 
     return neuron_g
+
+def add_bioparam_attributes(G, bio_param):
+
+    # iterate through the nodes
+    for node, data in G.nodes(data = True):
+        # if the node is in the soma
+        if      data['nodetype'] == 1:
+            nx.set_node_attributes(
+                G, 
+                {node:{
+                    'birth_type':   2,
+                    'c_b':          float(bio_param['soma_cb']),
+                    'birth_rate':   float(bio_param['soma_br']),
+                    'death_rate':   float(bio_param['death_rate']),
+                    'nss':          float(bio_param['soma_nss']),
+                    'delta':        float(bio_param['delta']),
+                    }
+                }
+            )
+        
+        # if the node is in an axon or dendrite
+        elif    data['nodetype'] == 2 or data['nodetype'] == 3:
+            nx.set_node_attributes(
+                G, 
+                {node:{
+                    'birth_type':   0,
+                    'death_rate':   float(bio_param['death_rate']),
+                    'nss':          -1,
+                    }
+                }
+            )
+
+    # iterate through the edges
+    for u, v, data in G.edges(data = True):
+        edge_type = data['edgetype']
+
+        # if the node is in the soma
+        if   edge_type == 1:
+            nx.set_edge_attributes(
+                G, 
+                {(u,v):{
+                    'rate':         float(bio_param['soma_diffusion']),
+                    }
+                }
+            )
+        
+        # if the node is in an axon or dendrite
+        elif edge_type in [2, 3]:
+            # set the rate to the anterior or retrograde rate, depending on the edge direction
+            edge_direction = data['direction']
+            if   edge_direction == 'forward': 
+                rate = float(bio_param['gamma_ant'])
+            elif edge_direction == 'reverse': 
+                rate = float(bio_param['gamma_ret'])
+            
+            nx.set_edge_attributes(
+                G, 
+                {(u,v):{
+                    'rate':         rate
+                    }
+                }
+            )
+
+        # if the edge is a direction reversing edge in the ladder model
+        elif edge_type == 5:
+            # set the rate to the anterior or retrograde rate, depending on the edge direction
+            nx.set_edge_attributes(
+                G, 
+                {(u,v):{
+                    'rate':         float(bio_param['reversal_rate'])
+                    }
+                }
+            )
+
+    return G

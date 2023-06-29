@@ -21,7 +21,7 @@ def sim_helpers_from_network(
 # generate the circular network corresponding to the soma
 def net_gen_hub_ring(
         n_nodes:        int,
-        bio_param:      dict,
+        bio_param:      dict = None,
         ) ->            nx.DiGraph:
     
     # make a circular graph, and transform it to a directed graph
@@ -29,16 +29,24 @@ def net_gen_hub_ring(
     if n_nodes == 1: soma_g.remove_edge(0, 0) # remove self loop if only one node is present
     soma_g = soma_g.to_directed()
 
-    # set node attributes
-    nx.set_node_attributes(soma_g, 2,                               "birth_type")
-    nx.set_node_attributes(soma_g, float(bio_param['soma_cb']),     "c_b")
-    nx.set_node_attributes(soma_g, float(bio_param['soma_br']),     "birth_rate")
-    nx.set_node_attributes(soma_g, float(bio_param['death_rate']),  "death_rate")
-    nx.set_node_attributes(soma_g, float(bio_param['soma_nss']),    "nss")
-    nx.set_node_attributes(soma_g, float(bio_param['delta']),       "delta")
-    
-    # add diffusion between soma nodes
-    nx.set_edge_attributes(soma_g, float(bio_param['soma_diffusion']), "rate")
+    # set node types to signify a soma
+    nx.set_node_attributes(soma_g, 1, "nodetype")
+    nx.set_node_attributes(soma_g, (0,0), "xy")
+    nx.set_node_attributes(soma_g, 2, "radius")
+    # set soma edge types
+    nx.set_edge_attributes(soma_g, 1, "edgetype")
+
+    # if available, set biological node attributes
+    if bio_param != None:
+        nx.set_node_attributes(soma_g, 2,                               "birth_type")
+        nx.set_node_attributes(soma_g, float(bio_param['soma_cb']),     "c_b")
+        nx.set_node_attributes(soma_g, float(bio_param['soma_br']),     "birth_rate")
+        nx.set_node_attributes(soma_g, float(bio_param['death_rate']),  "death_rate")
+        nx.set_node_attributes(soma_g, float(bio_param['soma_nss']),    "nss")
+        nx.set_node_attributes(soma_g, float(bio_param['delta']),       "delta")
+        
+        # add diffusion between soma nodes
+        nx.set_edge_attributes(soma_g, float(bio_param['soma_diffusion']), "rate")
     
     # relable nodes as to indicate they are part of the soma
     rename_dict = {i:f'S{i}' for i in range(n_nodes)}
