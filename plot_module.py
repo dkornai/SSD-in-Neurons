@@ -147,15 +147,14 @@ def plot_gillespie(
 
 # plotting the network 
 plot_col_dict = {0:'lightblue', 1:'lightgreen', 2:'orange'}
-def plot_network(G):
+def plot_simulator_graph(G):
     # Assign colors based on 'birth_type' attribute
     node_colors = [plot_col_dict[G.nodes[node]["birth_type"]] for node in G.nodes()]
 
     pos = graphviz_layout(G, root = 'N0', prog="neato")
     
     # get edge widths based on rates, and scale for display
-    edge_widths = [G.edges[edge]['rate'] for edge in G.edges()]
-    edge_widths = np.array(edge_widths)
+    edge_widths = np.array([G.edges[edge]['rate'] for edge in G.edges()])
     edge_widths = np.interp(edge_widths, (edge_widths.min(), edge_widths.max()), (0.5, 3))
     edge_widths = list(edge_widths)
 
@@ -171,7 +170,7 @@ def plot_network(G):
     nx.draw_networkx_labels(G, pos, font_size=12, font_weight='bold', font_color='r')
 
     plt.axis('off')  # Hide the axis
-    plt.show()  # Display the graph
+    plt.show()       # Display the graph
 
 
 
@@ -188,7 +187,12 @@ def draw_helpers(
     xy_coordinates = {node:data['xy'] for node, data in G.nodes(data=True)}
 
     node_radius = np.array([data['radius'] for node, data in G.nodes(data=True)])
-    node_radius = node_radius*(5/np.min(node_radius)) # scale for display such that max radius is 5
+    n_axon_nodes = node_colors.count('red') # get number of axons (red nodes)
+    if  n_axon_nodes == 1:
+        node_radius = node_radius*(5/np.min(node_radius)) # scale for display such that max radius is 5 if only 1 axonic node is present
+    else:
+        node_radius = node_radius*(2/np.min(node_radius)) # scale for display such that max radius is 2 if only 1 axonic node is present
+
     
     return node_colors, xy_coordinates, node_radius
 
@@ -202,20 +206,22 @@ def subset_layout(G):
     positions = {}
     for node in A.nodes():
         x, y = map(float, node.attr['pos'].split(','))
-        positions[int(node)] = (x, y)
+        positions[node] = (x, y)
 
     return positions
 
 # plot a network derived from the swm file corresponding to a real neuron
 def plot_neuron_graph(
-        G:              nx.Graph
+        G:              nx.Graph,
+        realxy:         bool = False,
         ):
     
     node_colors, xy_coordinates, node_radius = draw_helpers(G)
 
-    # drawing using real xy coordinates from swm file
-    fig, ax = plt.subplots(figsize=(10, 10))
-    nx.draw(G, pos=xy_coordinates, node_size=node_radius, ax=ax, node_color = node_colors)
+    if realxy == True:
+        # drawing using real xy coordinates from swm file
+        fig, ax = plt.subplots(figsize=(10, 10))
+        nx.draw(G, pos=xy_coordinates, node_size=node_radius, ax=ax, node_color = node_colors)
     
 
     # drawing using layout that shows structure
