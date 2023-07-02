@@ -9,11 +9,11 @@ def dataframes_from_network(G, prnt = False):
     node_attributes = {node: G.nodes[node] for node in G.nodes()}
 
     # Create a dataframe from the node attributes dictionary
-    df = pd.DataFrame.from_dict(node_attributes, orient='index')
+    df_nodes = pd.DataFrame.from_dict(node_attributes, orient='index')
 
     # Add a separate column for the node index
-    df.index.name = 'Node'
-    df = df.reset_index()
+    df_nodes.index.name = 'node'
+    df_nodes = df_nodes.reset_index()
 
 
     # Extract edge attributes into a list of dictionaries
@@ -23,23 +23,32 @@ def dataframes_from_network(G, prnt = False):
     df_edges = pd.DataFrame(edge_attributes)
 
     if prnt == True:
-        print('> Nodes:')
-        print(df)
+        print('> nodes:')
+        print(df_nodes)
         print('\n> Edges:')
         print(df_edges)
 
-    return df, df_edges
+    return df_nodes, df_edges
 
 # get node names, and component names (node + wt and mt) from the network
 def names_from_network(G):
-    df, df_edge = dataframes_from_network(G, prnt = False)
-    comp = df["Node"].to_list()
+    df_nodes, df_edges = dataframes_from_network(G, prnt = False)
+    comp = df_nodes["node"].to_list()
     vars = []
     for node in comp:
         vars.append(f'{node}_wt')
         vars.append(f'{node}_mt')
     
     return vars, comp
+
+# get node names, and component names (node + wt and mt) from the network
+def start_state_from_nodes(nodes, start_pop):
+    start_state = []
+    for _ in nodes: 
+        start_state.append(start_pop[0])
+        start_state.append(start_pop[1])
+    
+    return start_state
 
 def empty_react(n_pops):
     return [0]*n_pops
@@ -62,8 +71,8 @@ def transp_react(n_pops, source_i, dest_i):
 
 
 #### GENERATE THE HELPER DATASTRUCTURES FOR THE C MODULE THAT DOES THE GILLESPIE SIMULATION ####
-def gillespie_param_from_network(G, prnt=True):
-    df, df_edges = dataframes_from_network(G, prnt=False)
+def gillespie_param_from_network(G, prnt=False):
+    df_nodes, df_edges = dataframes_from_network(G, prnt=False)
     
     node_names_list = list(G.nodes())
     
@@ -84,7 +93,7 @@ def gillespie_param_from_network(G, prnt=True):
 
 
     ## BIRTH REACTIONS
-    for index, row in df.iterrows():
+    for index, row in df_nodes.iterrows():
         if row['birth_type'] != 0:
             for index_offset in range(2):
                 n_reactions += 1; reaction_types.append("birth")
@@ -112,7 +121,7 @@ def gillespie_param_from_network(G, prnt=True):
             birthrate_state_index.append(index*2)
                 
     ## DEATH REACTIONS
-    for index, row in df.iterrows():
+    for index, row in df_nodes.iterrows():
         for index_offset in range(2):
             n_reactions += 1; reaction_types.append("death")
             
@@ -188,7 +197,7 @@ a text python program, and then evaluates this python program and returns the ou
 def ODE_from_network(G, prnt = False):
     # collect data needed to generate the code
     nodenames, compartments = names_from_network(G)
-    df, df_edges = dataframes_from_network(G, prnt=False) 
+    df_nodes, df_edges = dataframes_from_network(G, prnt=False) 
 
     # names of the variables (node names + wt and mt)
     vars = []
@@ -205,7 +214,7 @@ def ODE_from_network(G, prnt = False):
         var_mt_name = f'{node_name}_mt'
         
         # get corresponding node row in row dataframe
-        noderow = df.loc[df['Node'] == node_name]
+        noderow = df_nodes.loc[df_nodes['node'] == node_name]
         
         # collect numeric values of specific parameters
         cb = float(noderow['c_b'])

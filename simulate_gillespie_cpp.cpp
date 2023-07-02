@@ -49,6 +49,18 @@ vec_long get_long_vec_from_np(
     return vec;
 }
 
+// check that all mutants are dead (every second element of the state vector == 0)
+bool all_mutants_dead(
+    const   vec_long    vec
+    ) 
+{
+    for (size_t i = 1; i < vec.size(); i += 2) {
+        if (vec[i] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
 
 // draw samples from an exponential with a specified rate
 double random_sample_exponential(
@@ -125,7 +137,7 @@ void simulate(
         
     // actual simulation part //
     for (int i = 0; i < n_time_points; ++i) {
-
+        
         // while the next time point is reached
         while (t < time_points[i]) {
             
@@ -171,11 +183,12 @@ void simulate(
                 t += 0.1;
             }
         }
-
+        
         // write the current state of the system to the output array
         for (int j = 0; j < n_pops; ++j) {
             sys_state_sample(i,j) = sys_state[j];
         }
+
     }
 }
 
