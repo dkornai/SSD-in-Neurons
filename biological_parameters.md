@@ -12,6 +12,8 @@
 
 - 1.5 days (flies) ([Modeling mitochondrial dynamics during in vivo axonal elongation - ScienceDirect](https://www.sciencedirect.com/science/article/pii/S0022519308004724?casa_token=rPmBGT5oZ3MAAAAA:pgTQ5LZelA085SZirV5r8i1VHXZUGCex1t-3iyHx8rMUPyqlIyGASAe_Y1IDSg-y3qAklEuuXg))
 
+- 2 days (mouse) ([Imaging axonal transport of mitochondria in vivo](https://doi.org/10.1038/nmeth1055))
+
 ----
 
 The outermost region (0.25-28 days) is chosen, and converted to rates/day using ln(2)/half-life, with some approximate rounding
@@ -62,8 +64,6 @@ A large proportion (~75-85%) are immotile, and motility is uneven between antero
 If the distance between nodes is larger or smaller, scale these values accordingly (e.g. For nodes separated by 500 μm, minimum value would be 3.46 /day )
 
 ### 3) birth rate ()
-
-
 
 # mitochondrial distribution
 
