@@ -12,7 +12,7 @@
 
 - 1.5 days (flies) ([Modeling mitochondrial dynamics during in vivo axonal elongation - ScienceDirect](https://www.sciencedirect.com/science/article/pii/S0022519308004724?casa_token=rPmBGT5oZ3MAAAAA:pgTQ5LZelA085SZirV5r8i1VHXZUGCex1t-3iyHx8rMUPyqlIyGASAe_Y1IDSg-y3qAklEuuXg))
 
-- 2 days (mouse) ([Imaging axonal transport of mitochondria in vivo](https://doi.org/10.1038/nmeth1055))
+- 2 days (mouse axon terminal) ([Imaging axonal transport of mitochondria in vivo](https://doi.org/10.1038/nmeth1055))
 
 ----
 
@@ -73,3 +73,15 @@ If the distance between nodes is larger or smaller, scale these values according
 | cell volume          | 0.39          | 0.23          | 0.38              |
 
 Source: [A Quantitative Study on the Distribution of Mitochondria in the Neuropil of the Juvenile Rat Somatosensory Cortex]("https://academic.oup.com/cercor/article/28/10/3673/5060262")
+
+# soma outflow mitochondrial flux
+
+Number of mt in soma: 
+
+100 mt/μm^3 density of mt, 4% of soma volume is mitochondria ([3D neuronal mitochondrial morphology in axons, dendrites, and somata of the aging mouse hippocampus](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8423436/)) -> ~4mt/μm^3 of soma volume
+
+approx. 7.5 μm diameter of soma -> ~7000 mt in the soma
+
+outflow is 6mt/h -> ~8500 mt/day 
+
+-> Outflow rate is ~1.2/day. If the soma is represented by multiple nodes, outflow rate must be adjusted upwards

@@ -17,6 +17,7 @@ def infer_graph_type(G):
     return gtype_i, nodetype_shortdict[gtype_i]
 
 
+
 # isolate a tree subgraph of an undirected graph, and return a directed subtree with edges away from the root node
 def make_subgraph_tree_directed(
         G:              nx.Graph, 
@@ -24,10 +25,20 @@ def make_subgraph_tree_directed(
         root:           str
         ) ->            nx.DiGraph:
 
+    # find leaf nodes in the source graph
+    leaf_nodes = [x for x in G.nodes() if (G.degree(x)==1 and x != root)]
+
     D = nx.DiGraph()
 
     # Add nodes and their attributes to the directed graph
     D.add_nodes_from((n, d) for n, d in G.nodes(data=True) if n in subgraph_nodes)
+
+    # mark leaf nodes
+    for node in D.nodes():
+        if node in leaf_nodes:
+            nx.set_node_attributes(D, {node:True},'terminal')
+        else:
+            nx.set_node_attributes(D, {node:False},'terminal')
 
     # Add edges and their attributes to the directed graph using BFS
     for u, v, d in G.edges(data=True):
