@@ -52,45 +52,68 @@ def make_subgraph_tree_directed(
 
 # ladderize a directed graph
 def ladderize(
-        G:      nx.DiGraph
-        ) ->    nx.DiGraph:
+        G:          nx.DiGraph,
+        root_node:  str,
+        ) ->        tuple[nx.DiGraph, list[str]]:
     
     # infer graph type
     gtype_i, gtype_c = infer_graph_type(G)
 
-    direction_forward = {"direction": "forward"}
-    direction_reverse = {"direction": "reverse"}
-
     L = nx.DiGraph()
 
-    for node, data in G.nodes(data=True):
-        # For each node, add a forward and a reverse node to the ladder graph
-        L.add_node(f"{gtype_c}{node}F", **data)
-        L.add_node(f"{gtype_c}{node}R", **data)
-
-    for u, v, data in G.edges(data=True):
-        
-        combined_data_forward = {**data, **direction_forward}
-        combined_data_reverse = {**data, **direction_reverse}
-
-        # For each edge, add an edge from the forward node of the source to the forward node of the target
-        # and from the reverse node of the source to the reverse node of the target in the ladder graph
-        L.add_edge(f"{gtype_c}{u}F", f"{gtype_c}{v}F", **combined_data_forward)
-        L.add_edge(f"{gtype_c}{v}R", f"{gtype_c}{u}R", **combined_data_reverse)
-
-    for node in G.nodes():
-        # For each node, add an edge between the forward and the reverse node in the ladder graph
-        L.add_edge(f"{gtype_c}{node}F", f"{gtype_c}{node}R", edgetype = 5)
-        L.add_edge(f"{gtype_c}{node}R", f"{gtype_c}{node}F", edgetype = 5)
+    # if the graph has only one node
+    if len(G.nodes) == 1:
+        # add a single terminal node, and 
+        node_data = G.nodes[root_node]
+        L.add_node(f"{gtype_c}{root_node}T", **node_data)
+        # set the nodes to connect accordingly
+        nodes_to_connect = [f"{gtype_c}{root_node}T"]
     
+    else:
+        for node, data in G.nodes(data=True):
+            is_terminal = data.get('terminal', False)
+            # For each node, add a forward and a reverse node to the ladder graph, unless it's terminal
+            if not is_terminal:
+                L.add_node(f"{gtype_c}{node}F", **data)
+                L.add_node(f"{gtype_c}{node}R", **data)
+            else:
+                L.add_node(f"{gtype_c}{node}T", **data)
+
+        for u, v, data in G.edges(data=True):
+            u_terminal = G.nodes[u].get('terminal', False)
+            v_terminal = G.nodes[v].get('terminal', False)
+
+            # add the edges
+            if u_terminal:
+                L.add_edge(f"{gtype_c}{u}T", f"{gtype_c}{v}F", **data)
+                L.add_edge(f"{gtype_c}{v}R", f"{gtype_c}{u}T", **data)
+            elif v_terminal:
+                L.add_edge(f"{gtype_c}{u}F", f"{gtype_c}{v}T", **data)
+                L.add_edge(f"{gtype_c}{v}T", f"{gtype_c}{u}R", **data)
+            else:
+                L.add_edge(f"{gtype_c}{u}F", f"{gtype_c}{v}F", **data)
+                L.add_edge(f"{gtype_c}{v}R", f"{gtype_c}{u}R", **data)
+    
+        for node in G.nodes():
+            is_terminal = G.nodes[node].get('terminal', False)
+            # For each node, add an edge between the forward and the reverse node in the ladder graph unless the node is terminal
+            if not is_terminal:
+                L.add_edge(f"{gtype_c}{node}F", f"{gtype_c}{node}R", edgetype = 5)
+                L.add_edge(f"{gtype_c}{node}R", f"{gtype_c}{node}F", edgetype = 5)
+
+
+        # set the nodes where the subgraph should be rejoined with the main graph
+        nodes_to_connect = [f'{gtype_c}{root_node}F', f'{gtype_c}{root_node}R']
+
     # Now, L is the ladder graph of G
-    return L    
+    return L, nodes_to_connect 
+
 
 # circularize a directed graph
 def circularize(
         G:          nx.DiGraph, 
         root_node:  str,
-        ) ->        nx.DiGraph:
+        ) ->        tuple[nx.DiGraph, list[str]]:
     
     # Function to get all root-to-leaf paths
     def get_paths(G, root_node):
@@ -105,18 +128,21 @@ def circularize(
     # Create an empty directed graph for the circular graph
     C = nx.DiGraph()
     
-    # add in the root nodes of each subgraph
-    node_data = G.nodes[root_node]
-    
-    C.add_node(f"{gtype_c}{root_node}F", **node_data)
-    C.add_node(f"{gtype_c}{root_node}R", **node_data)
-    
-    # if the graph has only one node, create a forward and a reverse node and connect them
+    # if the graph has only one node
     if len(G.nodes) == 1:
-        C.add_edge(f"{gtype_c}{root_node}F", f"{gtype_c}{root_node}R", edgetype = gtype_i)
+        # add a single terminal node, and 
+        node_data = G.nodes[root_node]
+        C.add_node(f"{gtype_c}{root_node}T", **node_data)
+        # set the nodes to connect accordingly
+        nodes_to_connect = [f"{gtype_c}{root_node}T"]
     
     # if the graph has more than one node, traverse the paths from the root 
     else:
+        # Add root nodes with their attributes
+        node_data = G.nodes[root_node]
+        C.add_node(f"{gtype_c}{root_node}F", **node_data)
+        C.add_node(f"{gtype_c}{root_node}R", **node_data)
+
         # Get all root-to-leaf paths
         paths = get_paths(G, root_node)
         
@@ -126,52 +152,49 @@ def circularize(
                 edge_data = G.edges[path[i], path[i+1]]
                 node_data = G.nodes[path[i+1]]
                 
-                # Add forward and reverse strands
-                C.add_node(f"{gtype_c}{path[i+1]}F", **node_data)
-                C.add_edge(f"{gtype_c}{path[i]}F", f"{gtype_c}{path[i+1]}F", **edge_data)
-                
-                C.add_node(f"{gtype_c}{path[i+1]}R", **node_data)
-                C.add_edge(f"{gtype_c}{path[i+1]}R", f"{gtype_c}{path[i]}R", **edge_data)
-                
+                # If it's not the terminal node, add forward and reverse strands
+                if node_data['terminal'] == False:
+                    C.add_node(f"{gtype_c}{path[i+1]}F", **node_data)
+                    C.add_node(f"{gtype_c}{path[i+1]}R", **node_data)
+                    C.add_edge(f"{gtype_c}{path[i]}F", f"{gtype_c}{path[i+1]}F", **edge_data)
+                    C.add_edge(f"{gtype_c}{path[i+1]}R", f"{gtype_c}{path[i]}R", **edge_data)
+                else:
+                    # For terminal nodes, add a single node and connect forward and reverse strands
+                    C.add_node(f"{gtype_c}{path[i+1]}T", **node_data)
+                    C.add_edge(f"{gtype_c}{path[i]}F", f"{gtype_c}{path[i+1]}T", **edge_data)
+                    C.add_edge(f"{gtype_c}{path[i+1]}T", f"{gtype_c}{path[i]}R", **edge_data)
 
-            # Connect forward and reverse strands at the leaf nodes
-            C.add_edge(f"{gtype_c}{path[-1]}F", f"{gtype_c}{path[-1]}R", edgetype = gtype_i)
-    
-    # add edge attribute showing forward transport direction
-    nx.set_edge_attributes(C, 'forward', 'direction')
+        # set the nodes where the subgraph should be rejoined with the main graph
+        nodes_to_connect = [f'{gtype_c}{root_node}F', f'{gtype_c}{root_node}R']
 
     # Now, C is the circularized graph of G
-    return C
+    return C, nodes_to_connect
 
 # bidirectionalize a directed graph
 def bidirectionalize(
         G:      nx.DiGraph
-        ) ->    nx.DiGraph:
+        ) ->    tuple[nx.DiGraph, list[str]]:
     
     # infer graph type
     gtype_i, gtype_c = infer_graph_type(G)
-
-    direction_forward = {"direction": "forward"}
-    direction_reverse = {"direction": "reverse"}
     
     # Create an empty directed graph for the bidirectional graph
     B = nx.DiGraph()
 
     # Iterate over the nodes in the original graph
     for node, data in G.nodes(data=True):
-        B.add_node(f'{gtype_c}{node}', **data)
+        B.add_node(f'{gtype_c}{node}B', **data)
 
-    # Iterate over the edges in the original graph
+    # For each edge, add an edge and its reverse to the bidirectional graph
     for u, v, data in G.edges(data=True):
-        combined_data_forward = {**data, **direction_forward}
-        combined_data_reverse = {**data, **direction_reverse}
-        
-        # For each edge, add an edge and its reverse to the bidirectional graph
-        B.add_edge(f'{gtype_c}{u}', f'{gtype_c}{v}', **combined_data_forward)
-        B.add_edge(f'{gtype_c}{v}', f'{gtype_c}{u}', **combined_data_reverse)
+        B.add_edge(f'{gtype_c}{u}B', f'{gtype_c}{v}B', **data)
+        B.add_edge(f'{gtype_c}{v}B', f'{gtype_c}{u}B', **data)
+
+    # set the nodes to connect to the first node in the graph
+    nodes_to_connect = [f"{gtype_c}{list(B.nodes())[0]}B"]
 
     # Now, B is the bidirectional graph of G
-    return B
+    return B, nodes_to_connect
 
 
 # ladderize, circularize, or bidirectionalize a subgraph (axon or dendrite) from the full neural graph
@@ -182,49 +205,20 @@ def subgraph_transform(
         transform_type:         str
         ) ->                    tuple[nx.DiGraph, list]:
     
-    
-
     # make subgraph directed away from root node
     dir_graph = make_subgraph_tree_directed(full_graph, subgraph_nodes, subgraph_root)
-    
-    #pos = subset_layout(dir_graph)
-    #nx.draw_networkx(dir_graph, pos = pos, connectionstyle='arc3,rad=0.1')
-    #plt.show()
-    
-    # ladderize graph
+
+        # ladderize graph
     if   transform_type == 'ladder':
-       
-        out_graph = ladderize(dir_graph)
-        gtype_i, gtype_c = infer_graph_type(out_graph)
-        nodes_to_connect = [f'{gtype_c}{subgraph_root}F', f'{gtype_c}{subgraph_root}R']
-        
-        # calculate new positions for visualizing
-        #newpos = {f'{key}F':pos[key] for key in pos}
-        #for key in pos: newpos[f'{key}R'] = (pos[key][0], pos[key][1]+2000)
-    
-    # circularize graph
-    elif transform_type == 'circle':
+        out_graph, nodes_to_connect = ladderize(dir_graph, subgraph_root)
+
         # circularize graph
-        out_graph = circularize(dir_graph, subgraph_root)
-        gtype_i, gtype_c = infer_graph_type(out_graph)
-        nodes_to_connect = [f'{gtype_c}{subgraph_root}F', f'{gtype_c}{subgraph_root}R']
+    elif transform_type == 'circle':
+        out_graph, nodes_to_connect = circularize(dir_graph, subgraph_root)
         
-        # calculate new positions for visualizing
-        #newpos = {f'{key}F':pos[key] for key in pos}
-        #for key in pos: newpos[f'{key}R'] = (pos[key][0], pos[key][1]+2000)
-    
-    # bidirectionalise graph
+        # bidirectionalise graph
     elif transform_type == 'bidirect':
-       
-        out_graph = bidirectionalize(dir_graph)
-        gtype_i, gtype_c = infer_graph_type(out_graph)
-        nodes_to_connect = [f'{gtype_c}{subgraph_root}']
-        
-        # calculate new positions for visualizing
-        #newpos = pos    
-    
-    #nx.draw_networkx(out_graph, pos = newpos, connectionstyle='arc3,rad=0.1')
-    #plt.show()
+        out_graph, nodes_to_connect = bidirectionalize(dir_graph)
 
     return out_graph, nodes_to_connect
 
@@ -267,6 +261,7 @@ def neuron_graph_transform(
         ) ->                    nx.DiGraph:
 
     assert transform_type in ['circle','ladder','bidirect'], 'transform_type must be "circle", "ladder", or "bidirect"'
+    assert n_soma_nodes > 0, 'must have at least 1 node in the soma'
     
     G = deepcopy(input_G) # deepcopy to avoid modifying the source graph
     print(f"> The undirected input graph has {len(list(G.nodes()))} nodes, and {len(list(G.edges()))} edges,", end = ' ')
@@ -294,16 +289,16 @@ def neuron_graph_transform(
     soma_nodes = list(neuron_g.nodes())
     
     # prepare to place each arbor such that they are maximally spread across the ring
-    soma_attach_node_indeces = [round(i * ((n_soma_nodes-1) / (n_subgraphs - 1))) for i in range(n_subgraphs)]
-
+    if n_soma_nodes > 1:
+        soma_attach_node_indeces = [round(i * ((n_soma_nodes-1) / (n_subgraphs - 1))) for i in range(n_subgraphs)]
+    else:
+        soma_attach_node_indeces = [0]
 
     # transform the subgraphs (dendrites and axons) according to the transform type, and attach them to the specified node on the soma ring
     for i in range(n_subgraphs):
         
         transformed_subgraph, nodes_to_connect = subgraph_transform(G, subgraphs[i], subgraph_roots[i], transform_type)
-        
         soma_attach_node = soma_nodes[soma_attach_node_indeces[i]]
-        
         neuron_g = subgraph_remerge(neuron_g, transformed_subgraph, soma_attach_node, nodes_to_connect)
 
 
@@ -353,23 +348,6 @@ def add_bioparam_attributes(G, bio_param):
                 G, 
                 {(u,v):{
                     'rate':         float(bio_param['soma_diffusion']),
-                    }
-                }
-            )
-        
-        # if the node is in an axon or dendrite
-        elif edge_type in [2, 3]:
-            # set the rate to the anterior or retrograde rate, depending on the edge direction
-            edge_direction = data['direction']
-            if   edge_direction == 'forward': 
-                rate = float(bio_param['gamma_ant'])
-            elif edge_direction == 'reverse': 
-                rate = float(bio_param['gamma_ret'])
-            
-            nx.set_edge_attributes(
-                G, 
-                {(u,v):{
-                    'rate':         rate
                     }
                 }
             )
