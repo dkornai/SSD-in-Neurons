@@ -71,35 +71,30 @@ def ladderize(
     
     else:
         for node, data in G.nodes(data=True):
-            is_terminal = data.get('terminal', False)
+            node_is_terminal = data.get('terminal', False)
             # For each node, add a forward and a reverse node to the ladder graph, unless it's terminal
-            if not is_terminal:
+            if not node_is_terminal:
                 L.add_node(f"{gtype_c}{node}F", **data)
                 L.add_node(f"{gtype_c}{node}R", **data)
             else:
                 L.add_node(f"{gtype_c}{node}T", **data)
 
         for u, v, data in G.edges(data=True):
-            u_terminal = G.nodes[u].get('terminal', False)
-            v_terminal = G.nodes[v].get('terminal', False)
-
+            v_is_terminal = G.nodes[v].get('terminal')
             # add the edges
-            if u_terminal:
-                L.add_edge(f"{gtype_c}{u}T", f"{gtype_c}{v}F", **data)
-                L.add_edge(f"{gtype_c}{v}R", f"{gtype_c}{u}T", **data)
-            elif v_terminal:
-                L.add_edge(f"{gtype_c}{u}F", f"{gtype_c}{v}T", **data)
-                L.add_edge(f"{gtype_c}{v}T", f"{gtype_c}{u}R", **data)
-            else:
-                L.add_edge(f"{gtype_c}{u}F", f"{gtype_c}{v}F", **data)
-                L.add_edge(f"{gtype_c}{v}R", f"{gtype_c}{u}R", **data)
+            if v_is_terminal: # if the node is terminal
+                L.add_edge(f"{gtype_c}{u}F", f"{gtype_c}{v}T", **data, direction = 'forward')
+                L.add_edge(f"{gtype_c}{v}T", f"{gtype_c}{u}R", **data, direction = 'reverse')
+            elif not v_is_terminal:
+                L.add_edge(f"{gtype_c}{u}F", f"{gtype_c}{v}F", **data, direction = 'forward')
+                L.add_edge(f"{gtype_c}{v}R", f"{gtype_c}{u}R", **data, direction = 'reverse')
     
         for node in G.nodes():
             is_terminal = G.nodes[node].get('terminal', False)
             # For each node, add an edge between the forward and the reverse node in the ladder graph unless the node is terminal
             if not is_terminal:
-                L.add_edge(f"{gtype_c}{node}F", f"{gtype_c}{node}R", edgetype = 5)
-                L.add_edge(f"{gtype_c}{node}R", f"{gtype_c}{node}F", edgetype = 5)
+                L.add_edge(f"{gtype_c}{node}F", f"{gtype_c}{node}R", edgetype = 5, direction = 'ar')
+                L.add_edge(f"{gtype_c}{node}R", f"{gtype_c}{node}F", edgetype = 5, direction = 'ra')
 
 
         # set the nodes where the subgraph should be rejoined with the main graph
@@ -152,17 +147,18 @@ def circularize(
                 edge_data = G.edges[path[i], path[i+1]]
                 node_data = G.nodes[path[i+1]]
                 
+                node_is_terminal = node_data['terminal']
                 # If it's not the terminal node, add forward and reverse strands
-                if node_data['terminal'] == False:
+                if not node_is_terminal:
                     C.add_node(f"{gtype_c}{path[i+1]}F", **node_data)
                     C.add_node(f"{gtype_c}{path[i+1]}R", **node_data)
-                    C.add_edge(f"{gtype_c}{path[i]}F", f"{gtype_c}{path[i+1]}F", **edge_data)
-                    C.add_edge(f"{gtype_c}{path[i+1]}R", f"{gtype_c}{path[i]}R", **edge_data)
-                else:
+                    C.add_edge(f"{gtype_c}{path[i]}F", f"{gtype_c}{path[i+1]}F", **edge_data, direction = 'forward')
+                    C.add_edge(f"{gtype_c}{path[i+1]}R", f"{gtype_c}{path[i]}R", **edge_data, direction = 'reverse')
+                elif node_is_terminal:
                     # For terminal nodes, add a single node and connect forward and reverse strands
                     C.add_node(f"{gtype_c}{path[i+1]}T", **node_data)
-                    C.add_edge(f"{gtype_c}{path[i]}F", f"{gtype_c}{path[i+1]}T", **edge_data)
-                    C.add_edge(f"{gtype_c}{path[i+1]}T", f"{gtype_c}{path[i]}R", **edge_data)
+                    C.add_edge(f"{gtype_c}{path[i]}F", f"{gtype_c}{path[i+1]}T", **edge_data, direction = 'forward')
+                    C.add_edge(f"{gtype_c}{path[i+1]}T", f"{gtype_c}{path[i]}R", **edge_data, direction = 'reverse')
 
         # set the nodes where the subgraph should be rejoined with the main graph
         nodes_to_connect = [f'{gtype_c}{root_node}F', f'{gtype_c}{root_node}R']
@@ -187,11 +183,11 @@ def bidirectionalize(
 
     # For each edge, add an edge and its reverse to the bidirectional graph
     for u, v, data in G.edges(data=True):
-        B.add_edge(f'{gtype_c}{u}B', f'{gtype_c}{v}B', **data)
-        B.add_edge(f'{gtype_c}{v}B', f'{gtype_c}{u}B', **data)
+        B.add_edge(f'{gtype_c}{u}B', f'{gtype_c}{v}B', **data, direction = 'forward')
+        B.add_edge(f'{gtype_c}{v}B', f'{gtype_c}{u}B', **data, direction = 'reverse')
 
     # set the nodes to connect to the first node in the graph
-    nodes_to_connect = [f"{gtype_c}{list(B.nodes())[0]}B"]
+    nodes_to_connect = [f"{list(B.nodes())[0]}"]
 
     # Now, B is the bidirectional graph of G
     return B, nodes_to_connect
@@ -354,11 +350,15 @@ def add_bioparam_attributes(G, bio_param):
 
         # if the edge is a direction reversing edge in the ladder model
         elif edge_type == 5:
+            if data['direction'] == 'ar': 
+                rate = float(bio_param['switch_rate_ar'])
+            elif data['direction'] == 'ra': 
+                rate = float(bio_param['switch_rate_ra'])
             # set the rate to the anterior or retrograde rate, depending on the edge direction
             nx.set_edge_attributes(
                 G, 
                 {(u,v):{
-                    'rate':         float(bio_param['reversal_rate'])
+                    'rate':         rate
                     }
                 }
             )
