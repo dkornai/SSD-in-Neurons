@@ -84,4 +84,8 @@ approx. 7.5 μm diameter of soma -> ~7000 mt in the soma
 
 outflow is 6mt/h -> ~8500 mt/day 
 
--> Outflow rate is ~1.2/day. If the soma is represented by multiple nodes, outflow rate must be adjusted upwards
+-> Outflow rate is ~1.2/day. If the soma is represented by multiple nodes, outflow rate must be adjusted upwards 
+
+
+
+at the axonic terminal, a stable population of 350 mt is maintained with an inflow if 180 mt/day and an outflow of 90 mt/day ([Imaging axonal transport of mitochondria in vivo](https://doi.org/10.1038/nmeth1055))

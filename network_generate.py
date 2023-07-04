@@ -49,7 +49,7 @@ def net_gen_hub_ring(
         nx.set_edge_attributes(soma_g, float(bio_param['soma_diffusion']), "rate")
     
     # relable nodes as to indicate they are part of the soma
-    rename_dict = {i:f'S{i}' for i in range(n_nodes)}
+    rename_dict = {i:f'S{i}B' for i in range(n_nodes)}
     nx.relabel_nodes(soma_g, rename_dict, copy=False)
 
 

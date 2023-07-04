@@ -151,7 +151,7 @@ def plot_simulator_graph(G):
     # Assign colors based on 'birth_type' attribute
     node_colors = [plot_col_dict[G.nodes[node]["birth_type"]] for node in G.nodes()]
 
-    pos = graphviz_layout(G, root = 'N0', prog="neato")
+    pos = subset_layout(G)
     
     # get edge widths based on rates, and scale for display
     edge_widths = np.array([G.edges[edge]['rate'] for edge in G.edges()])
