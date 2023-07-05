@@ -322,8 +322,20 @@ def add_bioparam_attributes(G, bio_param):
                 }
             )
         
-        # if the node is in an axon or dendrite
-        elif    data['nodetype'] == 2 or data['nodetype'] == 3:
+        # if the node is in an axon
+        elif    data['nodetype'] == 2:
+            nx.set_node_attributes(
+                G, 
+                {node:{
+                    'birth_type':   0,
+                    'death_rate':   float(bio_param['death_rate']),
+                    'nss':          float(bio_param['axon_node_pop']),
+                    }
+                }
+            )
+        
+        # if the node is in a dendrite
+        elif    data['nodetype'] == 3:
             nx.set_node_attributes(
                 G, 
                 {node:{
@@ -337,8 +349,10 @@ def add_bioparam_attributes(G, bio_param):
     # iterate through the edges
     for u, v, data in G.edges(data = True):
         edge_type = data['edgetype']
+        dest_data = G.nodes(data = True)[v]
+        src_data  = G.nodes(data = True)[u]
 
-        # if the node is in the soma
+        # if the edge is in the soma
         if   edge_type == 1:
             nx.set_edge_attributes(
                 G, 
@@ -347,6 +361,25 @@ def add_bioparam_attributes(G, bio_param):
                     }
                 }
             )
+
+        # if the edge is in the soma
+        if   edge_type == 2:
+            if dest_data.get('terminal', False) == True:
+                nx.set_edge_attributes(
+                    G, 
+                    {(u,v):{
+                        'net_flux':         float(bio_param['axon_terminal_influx']),
+                        }
+                    }
+                )
+            elif src_data.get('terminal', False) == True:
+                nx.set_edge_attributes(
+                    G, 
+                    {(u,v):{
+                        'net_flux':         float(bio_param['axon_terminal_efflux']),
+                        }
+                    }
+                )
 
         # if the edge is a direction reversing edge in the ladder model
         elif edge_type == 5:
