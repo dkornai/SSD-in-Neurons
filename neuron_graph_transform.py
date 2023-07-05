@@ -324,11 +324,19 @@ def add_bioparam_attributes(G, bio_param):
         
         # if the node is in an axon
         elif    data['nodetype'] == 2:
+            if data['terminal'] == False:
+                # adjust death rate according to the amount of time it takes for mt to pass through the node
+                incoming_edges = list(G.in_edges(node, data=True))
+                total_incoming_edge_length = sum([incoming_edges[i][2].get('len',0) for i in range(len(incoming_edges))])
+                death_rate = round((total_incoming_edge_length/bio_param['axon_transp_speed'])*bio_param['death_rate'], 6)
+            else:
+                death_rate = bio_param['death_rate']
+
             nx.set_node_attributes(
                 G, 
                 {node:{
                     'birth_type':   0,
-                    'death_rate':   float(bio_param['death_rate']),
+                    'death_rate':   death_rate,
                     'nss':          float(bio_param['axon_node_pop']),
                     }
                 }
@@ -336,12 +344,20 @@ def add_bioparam_attributes(G, bio_param):
         
         # if the node is in a dendrite
         elif    data['nodetype'] == 3:
+            if data['terminal'] == False:
+                # adjust death rate according to the amount of time it takes for mt to pass through the node
+                incoming_edges = list(G.in_edges(node, data=True))
+                total_incoming_edge_length = sum([incoming_edges[i][2].get('len',0) for i in range(len(incoming_edges))])
+                death_rate = round((total_incoming_edge_length/bio_param['dendrite_transp_speed'])*bio_param['death_rate'], 6)
+            else:
+                death_rate = bio_param['death_rate']
+
             nx.set_node_attributes(
                 G, 
                 {node:{
                     'birth_type':   0,
-                    'death_rate':   float(bio_param['death_rate']),
-                    'nss':          -1,
+                    'death_rate':   death_rate,
+                    'nss':          float(bio_param['dendrite_node_pop']),
                     }
                 }
             )

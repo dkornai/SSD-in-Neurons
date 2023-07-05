@@ -1,7 +1,7 @@
 import numpy as np; np.set_printoptions(suppress=True, linewidth=180)
 import pandas as pd; pd.set_option('display.width', 500)
 from scipy.optimize import minimize
-
+from scipy.optimize import shgo
 
 def mat_print(data):
     # df=pd.DataFrame(
@@ -438,7 +438,7 @@ def get_pop_ratio_constraints(
     # make the text for the constraint program
     constr_prog = 'global pop_pop_ratio_constraints\ndef pop_pop_ratio_constraints(x):\n\tarray = [\n'
     constr_prog += constr
-    constr_prog += '\t\t]\n\treturn np.array(array)'
+    constr_prog += '\t\t]\n\treturn np.array(array)*10'
     
     print(constr)
     # replace human readable variable names with those that mapp all categories to a single vector
@@ -489,8 +489,8 @@ def get_minimizer_bounds(
 # get the starting values of the flux parameters solved by the minimizer
 def get_minimizer_startval(
         orig_to_x, 
-        start_flux_rate = 1,
-        start_pop_size = 100,
+        start_flux_rate = 50,
+        start_pop_size = 500,
         ):
     
     startval = []
@@ -592,14 +592,14 @@ def solve_subgraph_flux(G):
     mass_cons_cons = {'type': 'eq', 'fun': mass_conserve_constraint}
     pop_sum_cons = {'type': 'eq', 'fun': pop_sum_constraints}
     net_flux_cons = {'type': 'eq', 'fun': net_flux_constraints}
-    #flux_ratio_cons = {'type': 'ineq', 'fun': flux_ratio_constraints}
-    #pop_ratio_cons = {'type': 'ineq', 'fun': pop_ratio_constraints}
+    flux_ratio_cons = {'type': 'ineq', 'fun': flux_ratio_constraints}
+    pop_ratio_cons = {'type': 'ineq', 'fun': pop_ratio_constraints}
     cons = [
         mass_cons_cons, 
         pop_sum_cons, 
         net_flux_cons, 
-        #flux_ratio_cons, 
-        #pop_ratio_cons
+        flux_ratio_cons, 
+        pop_ratio_cons
             ]
 
     bnds = get_minimizer_bounds(orig_to_x)
@@ -615,7 +615,6 @@ def solve_subgraph_flux(G):
         bounds = bnds, 
         constraints=cons,
         options={'disp':True, 'maxiter':5000},
-        #tol = 0.0001,
         )
 
     results = np.round(solution.x, 4)
