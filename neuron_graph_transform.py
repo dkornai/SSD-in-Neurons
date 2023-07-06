@@ -6,17 +6,12 @@ TAKE AN UNDIRECTED NEURON GRAPH, WITH MARKED SOMA, DENDRITES, AND AXONS, AND TRA
 
 from copy import deepcopy
 import networkx as nx
+import numpy as np
 from network_generate import net_gen_hub_ring
+from neuron_graph_helper import infer_graph_type, get_edges_in_each_branch, get_nodes_in_each_branch
 
 nodetype_dict = {1:'soma', 2:'axon',3:'dendrite'}
 nodetype_shortdict = {1:'S', 2:'A',3:'D'}
-
-
-def infer_graph_type(G):
-    gtype_i = int(list(G.nodes(data = True))[0][1]['nodetype'])
-    return gtype_i, nodetype_shortdict[gtype_i]
-
-
 
 # isolate a tree subgraph of an undirected graph, and return a directed subtree with edges away from the root node
 def make_subgraph_tree_directed(
@@ -223,7 +218,8 @@ def subgraph_remerge(
         full_graph:             nx.DiGraph, 
         transformed_subgraph:   nx.DiGraph,
         soma_attach_node:       str, 
-        subgraph_attach_nodes:  list[str]
+        subgraph_attach_nodes:  list[str],
+        original_edge_len:      float,
         ) ->                    nx.DiGraph:
     
     # find the type (axon or dendrite) of the subgraph
@@ -236,180 +232,106 @@ def subgraph_remerge(
     # ladderized and circularized graphs have their forward and reverse sides connected to the target soma node
     if   len(subgraph_attach_nodes) == 2:
         full_graph.add_edge(soma_attach_node, subgraph_attach_nodes[0],
-                            edgetype = gtype_i, direction = 'forward')
+                            edgetype = gtype_i, direction = 'forward', len = original_edge_len)
         full_graph.add_edge(subgraph_attach_nodes[1], soma_attach_node,
-                            edgetype = gtype_i, direction = 'reverse')
+                            edgetype = gtype_i, direction = 'reverse', len = original_edge_len)
         
     # bidirectionailzed graphs connect their root to the target soma node
     elif len(subgraph_attach_nodes) == 1:
         full_graph.add_edge(soma_attach_node, subgraph_attach_nodes[0],
-                            edgetype = gtype_i, direction = 'forward')
+                            edgetype = gtype_i, direction = 'forward', len = original_edge_len)
         full_graph.add_edge(subgraph_attach_nodes[0], soma_attach_node,
-                            edgetype = gtype_i, direction = 'reverse')
+                            edgetype = gtype_i, direction = 'reverse', len = original_edge_len)
         
     return full_graph
+
+
+
+
+# isolate each arbor (dendrite or axon) in a basic graph
+def find_subgraphs(G, root_node = '1'):
+    
+    subgraphs = []
+
+    # get edges and nodes in each subgraph
+    edges_in_each_subgraph = get_edges_in_each_branch(G, root_node=root_node)
+    nodes_in_each_subgraph = get_nodes_in_each_branch(G, root_node=root_node)
+    for edges, nodes in zip(edges_in_each_subgraph, nodes_in_each_subgraph):
+        subgraphs.append({
+            'type':G.nodes()[nodes[1]]['nodetype'],
+            'type_name':nodetype_dict[G.nodes()[nodes[1]]['nodetype']],
+            'total_volume':round(np.sum([data['volume'] for u, v, data in G.edges(data = True) if (u,v) in edges]), 2),
+            'n_nodes':len(nodes[1:]),
+            'branch_start_node':nodes[1],
+            'branch_start_edge_len':G.edges()[edges[0]]['len'],
+            'branch_nodes':nodes[1:], 
+            'edges':edges
+            })
+    
+    print(f'Found {len(subgraphs)} branches:')
+    for subgraph in subgraphs:
+        print(f"{subgraph['type_name']} of {subgraph['n_nodes']} nodes, total volume is {subgraph['total_volume']} um^3")
+    
+    return subgraphs
+
+
 
 # take an undirected graph of a neuron, and transform it into a directed network
 def neuron_graph_transform(
         input_G:                nx.Graph, 
         transform_type:         str, 
         n_soma_nodes:           int,
-        ) ->                    nx.DiGraph:
+        ) ->                    tuple[nx.DiGraph, list[list[str]]]:
 
     assert transform_type in ['circle','ladder','bidirect'], 'transform_type must be "circle", "ladder", or "bidirect"'
     assert n_soma_nodes > 0, 'must have at least 1 node in the soma'
     
     G = deepcopy(input_G) # deepcopy to avoid modifying the source graph
-    print(f"> The undirected input graph has {len(list(G.nodes()))} nodes, and {len(list(G.edges()))} edges,", end = ' ')
+    print(f"\n>> Transforming input graph:\n> The undirected input graph has {len(list(G.nodes()))} nodes, and {len(list(G.edges()))} edges.", end = ' ')
 
-    # isolate subgraph roots (first node of each axon and dendrite)
-    subgraph_roots = list(nx.descendants_at_distance(G, '1', 1))
-    subgraph_roots.sort(key=lambda x: int(x)) # sort for match of order with subgraph list
+    # find the axon and dendrite branches of the full graph
+    subgraphs = find_subgraphs(G, root_node='1')
+    n_subgraphs = len(subgraphs)
 
     # separate into subgraphs by removing all edges relating to the soma
     G.remove_edges_from(list(G.edges('1')))
-    subgraphs = list(nx.connected_components(G)); subgraphs = [list(subgraph) for subgraph in subgraphs]
-    subgraphs.sort(key=lambda x: int(x[0])); subgraphs = subgraphs[1:] # sort to match order of subgraph root list
-    
-    n_subgraphs = len(subgraphs)
-    assert n_subgraphs <= n_soma_nodes, f'n_soma_nodes (currently {n_soma_nodes}) must be >= the number of axons and dendrites (currently {n_subgraphs})'
-    
-    # check the number and types of subgraphs
-    gtype_is = [nodetype_dict[G.nodes()[subgraph[0]]['nodetype']] for subgraph in subgraphs]
-    print(f'and {n_subgraphs} subgraph(s):')
-    print(f"{str([f'{gtype_is[i]} with {len(subgraphs[i])} nodes' for i in range(n_subgraphs)])[1:-1]}")
-
 
     # make soma using the ring generator
     neuron_g = net_gen_hub_ring(n_nodes=n_soma_nodes)
-    soma_nodes = list(neuron_g.nodes())
     
     # prepare to place each arbor such that they are maximally spread across the ring
+    soma_nodes = list(neuron_g.nodes())
     if n_soma_nodes > 1:
-        soma_attach_node_indeces = [round(i * ((n_soma_nodes-1) / (n_subgraphs - 1))) for i in range(n_subgraphs)]
+        soma_attach_nodes = [soma_nodes[int(round(i * ((n_soma_nodes-1) / (n_subgraphs - 1))))] for i in range(n_subgraphs)]
     else:
-        soma_attach_node_indeces = [0]
+        soma_attach_nodes = [soma_nodes[0] for i in range(n_subgraphs)]
 
-    # transform the subgraphs (dendrites and axons) according to the transform type, and attach them to the specified node on the soma ring
-    for i in range(n_subgraphs):
+    # start collecting the nodes in each subgraph of the output graph
+    output_subgraphs = []
+
+    # complete the transformation of the original graph by:
+    for subgraph, soma_nodes_to_connect in zip(subgraphs, soma_attach_nodes):
+        # transforming the subgraphs (dendrites and axons) according to the transform type
+        transformed_subgraph, branch_nodes_to_connect = subgraph_transform(
+            full_graph = G, 
+            subgraph_nodes = subgraph['branch_nodes'], 
+            subgraph_root = subgraph['branch_start_node'], 
+            transform_type = transform_type
+            )
+        # and attaching them to the specified node on the soma ring
+        neuron_g = subgraph_remerge(
+            full_graph = neuron_g, 
+            transformed_subgraph = transformed_subgraph, 
+            soma_attach_node = soma_nodes_to_connect, 
+            subgraph_attach_nodes = branch_nodes_to_connect,
+            original_edge_len = subgraph['branch_start_edge_len']
+            )
         
-        transformed_subgraph, nodes_to_connect = subgraph_transform(G, subgraphs[i], subgraph_roots[i], transform_type)
-        soma_attach_node = soma_nodes[soma_attach_node_indeces[i]]
-        neuron_g = subgraph_remerge(neuron_g, transformed_subgraph, soma_attach_node, nodes_to_connect)
-
+        # connect the nodes forming a subgraph in the outputted graph
+        transformed_subgraph_nodes = list(transformed_subgraph.nodes())
+        transformed_subgraph_nodes.append(soma_nodes_to_connect)
+        output_subgraphs.append(transformed_subgraph_nodes)
 
     print(f"> the directed output graph has {len(list(neuron_g.nodes()))} nodes, and {len(list(neuron_g.edges()))} edges")
 
-
-    return neuron_g
-
-def add_bioparam_attributes(G, bio_param):
-
-    # iterate through the nodes
-    for node, data in G.nodes(data = True):
-        # if the node is in the soma
-        if      data['nodetype'] == 1:
-            nx.set_node_attributes(
-                G, 
-                {node:{
-                    'birth_type':   2,
-                    'c_b':          float(bio_param['soma_cb']),
-                    'birth_rate':   float(bio_param['soma_br']),
-                    'death_rate':   float(bio_param['death_rate']),
-                    'nss':          float(bio_param['soma_nss']),
-                    'delta':        float(bio_param['delta']),
-                    }
-                }
-            )
-        
-        # if the node is in an axon
-        elif    data['nodetype'] == 2:
-            if data['terminal'] == False:
-                # adjust death rate according to the amount of time it takes for mt to pass through the node
-                incoming_edges = list(G.in_edges(node, data=True))
-                total_incoming_edge_length = sum([incoming_edges[i][2].get('len',0) for i in range(len(incoming_edges))])
-                death_rate = round((total_incoming_edge_length/bio_param['axon_transp_speed'])*bio_param['death_rate'], 6)
-            else:
-                death_rate = bio_param['death_rate']
-
-            nx.set_node_attributes(
-                G, 
-                {node:{
-                    'birth_type':   0,
-                    'death_rate':   death_rate,
-                    'nss':          float(bio_param['axon_node_pop']),
-                    }
-                }
-            )
-        
-        # if the node is in a dendrite
-        elif    data['nodetype'] == 3:
-            if data['terminal'] == False:
-                # adjust death rate according to the amount of time it takes for mt to pass through the node
-                incoming_edges = list(G.in_edges(node, data=True))
-                total_incoming_edge_length = sum([incoming_edges[i][2].get('len',0) for i in range(len(incoming_edges))])
-                death_rate = round((total_incoming_edge_length/bio_param['dendrite_transp_speed'])*bio_param['death_rate'], 6)
-            else:
-                death_rate = bio_param['death_rate']
-
-            nx.set_node_attributes(
-                G, 
-                {node:{
-                    'birth_type':   0,
-                    'death_rate':   death_rate,
-                    'nss':          float(bio_param['dendrite_node_pop']),
-                    }
-                }
-            )
-
-    # iterate through the edges
-    for u, v, data in G.edges(data = True):
-        edge_type = data['edgetype']
-        dest_data = G.nodes(data = True)[v]
-        src_data  = G.nodes(data = True)[u]
-
-        # if the edge is in the soma
-        if   edge_type == 1:
-            nx.set_edge_attributes(
-                G, 
-                {(u,v):{
-                    'rate':         float(bio_param['soma_diffusion']),
-                    }
-                }
-            )
-
-        # if the edge is in the soma
-        if   edge_type == 2:
-            if dest_data.get('terminal', False) == True:
-                nx.set_edge_attributes(
-                    G, 
-                    {(u,v):{
-                        'net_flux':         float(bio_param['axon_terminal_influx']),
-                        }
-                    }
-                )
-            elif src_data.get('terminal', False) == True:
-                nx.set_edge_attributes(
-                    G, 
-                    {(u,v):{
-                        'net_flux':         float(bio_param['axon_terminal_efflux']),
-                        }
-                    }
-                )
-
-        # if the edge is a direction reversing edge in the ladder model
-        elif edge_type == 5:
-            if data['direction'] == 'ar': 
-                rate = float(bio_param['switch_rate_ar'])
-            elif data['direction'] == 'ra': 
-                rate = float(bio_param['switch_rate_ra'])
-            # set the rate to the anterior or retrograde rate, depending on the edge direction
-            nx.set_edge_attributes(
-                G, 
-                {(u,v):{
-                    'rate':         rate
-                    }
-                }
-            )
-
-    return G
+    return neuron_g, output_subgraphs
