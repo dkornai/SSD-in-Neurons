@@ -231,3 +231,4 @@ def plot_neuron_graph(
 
     fig, ax = plt.subplots(figsize=(10, 10))
     nx.draw(G, pos=subset_layout(G), node_size=node_radius, ax=ax, node_color = node_colors)
+    plt.show()

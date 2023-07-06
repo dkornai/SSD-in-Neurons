@@ -86,6 +86,14 @@ outflow is 6mt/h -> ~8500 mt/day
 
 -> Outflow rate is ~1.2/day. If the soma is represented by multiple nodes, outflow rate must be adjusted upwards 
 
-
-
 at the axonic terminal, a stable population of 350 mt is maintained with an inflow if 180 mt/day and an outflow of 90 mt/day ([Imaging axonal transport of mitochondria in vivo](https://doi.org/10.1038/nmeth1055))
+
+# interplay of death rates and transport speeds in the non-terminal regions of the arbor
+
+typical mt trafficking speed is 0.65 μm/sec -> ~56000 μm/day 
+
+motile fraction is 0.25 -> effective averge speed is ~14000 μm/day
+
+**Death rates at intermediate nodes should be representative of the amount of time it takes for mt to travel there**
+
+e.g. death rate at a given node is death_rate*(edge_length/mt_transport_speed)
