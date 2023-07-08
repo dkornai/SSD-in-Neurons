@@ -218,3 +218,30 @@ def add_bioparam_attributes(
             )
 
     return G
+
+
+def adjust_soma_birthrate(G, bio_param, total_outflow):
+    n_soma_nodes = n_nodes_by_type(G)[0]
+    
+    # recalculate birth rate based on the deaths in the soma, and the net outflow
+    
+    total_deaths = n_soma_nodes*bio_param['soma_nss']*bio_param['soma_death_rate']
+    total_loss = total_deaths + abs(total_outflow)
+    new_birthrate = round(total_loss/bio_param['soma_nss'],4)
+    print(f"\n> Adjusting soma birth rates to {new_birthrate} to match steady state demand from {total_deaths} deaths in the soma and {round(abs(total_outflow),4)} otflow.")
+
+    bio_param['soma_nss'] = new_birthrate
+
+    # iterate through the nodes
+    for node, data in G.nodes(data = True):
+        # if the node is in the soma
+        if data['nodetype'] == 1:
+            nx.set_node_attributes(
+                G, 
+                {node:{
+                    'birth_rate':   new_birthrate,
+                    }
+                }
+            )
+
+    return G, bio_param

@@ -41,12 +41,34 @@ def names_from_network(G):
     
     return vars, comp
 
-# get node names, and component names (node + wt and mt) from the network
-def start_state_from_nodes(nodes, start_pop):
+# calculate the number if mutants and wildtypes, if the e.p.s == nss
+def wt_mt_count(Nss, d, heteroplasmy):
+    effective_load = (1-heteroplasmy)+(heteroplasmy*d)
+    effective_Nss = Nss/effective_load
+    wt = np.rint((1-heteroplasmy)*effective_Nss)
+    mt = np.rint(heteroplasmy*effective_Nss)
+    
+    return int(wt), int(mt)
+
+# set the number of starting wt and mt in each compartment (node)
+def start_state_from_nodes(
+        G, 
+        heteroplasmy = 0, 
+        delta = 1
+        ):
+    
     start_state = []
-    for _ in nodes: 
-        start_state.append(start_pop[0])
-        start_state.append(start_pop[1])
+    
+    assert 0 <= heteroplasmy <= 1, 'heteroplasmy must be between 0 and 1'
+    if heteroplasmy != 0:
+        assert delta != 0, 'delta value must be specified if heteroplasmy is not 0'
+        assert 0 <= delta <= 1, 'delta must be between 0 and 1'
+
+    for node, data in G.nodes(data =True):
+        wt_pop, mt_pop = wt_mt_count(data['nss'], delta, heteroplasmy)
+        
+        start_state.append(wt_pop)
+        start_state.append(mt_pop)
     
     return start_state
 

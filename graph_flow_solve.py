@@ -222,6 +222,7 @@ def flux_matrix_from_subnetwork(G, map_df):
 def get_pop_sum_constraints(
         orig_to_x,
         G,
+        prnt
         ):
     
     nodes = list(G.nodes()); n_nodes = len(nodes)
@@ -245,7 +246,7 @@ def get_pop_sum_constraints(
     constr_prog += constr
     constr_prog += '\t\t]\n\treturn np.array(array)'
     
-    print(constr)
+    if prnt: print(constr)
     # replace human readable variable names with those that mapp all categories to a single vector
     constr_prog = replace_text(constr_prog, orig_to_x)
     #print(constr_prog)
@@ -261,6 +262,7 @@ def get_pop_sum_constraints(
 def get_net_flux_constraints(
         orig_to_x,
         map_df,
+        prnt
         ):
     
     in_u_popsize = map_df['u_popsize'].tolist()
@@ -280,7 +282,7 @@ def get_net_flux_constraints(
     constr_prog += constr
     constr_prog += '\t\t]\n\treturn np.array(array)'
     
-    print(constr)
+    if prnt: print(constr)
     # replace human readable variable names with those that mapp all categories to a single vector
     constr_prog = replace_text(constr_prog, orig_to_x)
     #print(constr_prog)
@@ -298,6 +300,7 @@ def get_mass_conserve_constraints(
         orig_to_x,
         G,
         flux_matrix,
+        prnt
         ):
     nodes = list(G.nodes()); n_nodes = len(nodes)
     
@@ -356,7 +359,7 @@ def get_mass_conserve_constraints(
     constr_prog += constr
     constr_prog += '\t\t]\n\treturn np.array(array)'
     
-    print(constr)
+    if prnt: print(constr)
     # replace human readable variable names with those that mapp all categories to a single vector
     constr_prog = replace_text(constr_prog, orig_to_x)
     #print(constr_prog)
@@ -374,7 +377,8 @@ def get_flux_ratio_constraints(
         orig_to_x,
         flux_map_df,  
         ratio, 
-        epsilon
+        epsilon,
+        prnt
         ):
     
     # get the list of forward-reverse names for unknown variables
@@ -401,7 +405,7 @@ def get_flux_ratio_constraints(
     constr_prog += constr
     constr_prog += '\t\t]\n\treturn np.array(array)'
     
-    print(constr)
+    if prnt: print(constr)
     # replace human readable variable names with those that mapp all categories to a single vector
     constr_prog = replace_text(constr_prog, orig_to_x)
     #print(constr_prog)
@@ -419,6 +423,7 @@ def get_pop_ratio_constraints(
         G,
         ratio, 
         epsilon,
+        prnt,
         ):
     
     # get populatoins that are forward-reverse pairs
@@ -438,9 +443,9 @@ def get_pop_ratio_constraints(
     # make the text for the constraint program
     constr_prog = 'global pop_pop_ratio_constraints\ndef pop_pop_ratio_constraints(x):\n\tarray = [\n'
     constr_prog += constr
-    constr_prog += '\t\t]\n\treturn np.array(array)*10'
+    constr_prog += '\t\t]\n\treturn np.array(array)'
     
-    print(constr)
+    if prnt: print(constr)
     # replace human readable variable names with those that mapp all categories to a single vector
     constr_prog = replace_text(constr_prog, orig_to_x)
     #print(constr_prog)
@@ -452,15 +457,26 @@ def get_pop_ratio_constraints(
 
     return pop_pop_ratio_constraints
 
-# objective function is to minimize is the total flux in the system
-def get_objective_function(orig_to_x):
-    # count the number of rate parameters, the goal is to minimize their sum
-    n_flux_param = len([key for key in orig_to_x if key[0] == 'r'])
+# objective function is to minimize is the sum net total flux in the system
+def get_objective_function(orig_to_x, flux_map_df):
+    unknown_net_fluxes = [element for element in flux_map_df['net_flux'].to_list() if type(element) != float]
+    
+    constr = ''
+    for element in unknown_net_fluxes:
+        constr += f'\t\t{element},\n'
     
     # make the text for the constraint program
-    constr_prog = f'global total_flux\ndef total_flux(x):\n\treturn np.sum(x[0:{n_flux_param}])'
-    #print(constr_prog)
+    ##n_flux_param = len([element for element in orig_to_x if element[0] == 'f'])
+    ##constr_prog = f'global total_flux\ndef total_flux(x):\n\treturn np.sum(x[0:{n_flux_param}])'
+    constr_prog = f'global total_flux\ndef total_flux(x):\n\tarray = [\n'
+    constr_prog += constr
+    constr_prog += '\t\t]\n\treturn np.sum(array)'
+    # #print(constr_prog)
     
+    # replace human readable variable names with those that mapp all categories to a single vector
+    constr_prog = replace_text(constr_prog, orig_to_x)
+    #print(constr_prog)
+
     # execute the text created above as a program, to yield the flux_constraint function
     global total_flux
     total_flux = None
@@ -472,7 +488,7 @@ def get_objective_function(orig_to_x):
 # get the lb and ub for each of the flux parameters solved by the minimizer
 def get_minimizer_bounds(
         orig_to_x, 
-        flux_rate_lb = 0.1, 
+        flux_rate_lb = 0.01, 
         flux_rate_ub = 100,
         pop_lb = 10,
         pop_ub = 1000,
@@ -561,31 +577,37 @@ def update_flux_matrix(flux_matrix, flux_map_df):
     
     return flux_matrix
 
-def solve_subgraph_flux(G):
+def get_soma_outflow_requirement(flux_map_df):
+    flux_out = flux_map_df[flux_map_df['u'].str.startswith('S')]['net_flux'].values[0]
+    flux_in = flux_map_df[flux_map_df['v'].str.startswith('S')]['net_flux'].values[0]
+
+    return flux_in - flux_out
+
+def solve_subgraph_flux(G, prnt = False):
 
     print('> Flux dataframe with unknowns:')
     flux_map_df = flux_map_df_from_subnetwork(G)
     orig_to_x, x_to_orig = get_variable_name_remap(flux_map_df)
     print(flux_map_df)
 
-    print('\n> Net flux matrix with unknowns:')
+    if prnt: print('\n> Net flux matrix with unknowns:')
     flux_matrix = flux_matrix_from_subnetwork(G, flux_map_df)
-    mat_print(flux_matrix)
+    if prnt: mat_print(flux_matrix)
 
 
-    print('\n> Mass conservation constraints:')
+    if prnt: print('\n> Mass conservation constraints:')
     mass_conserve_constraint = get_mass_conserve_constraints(orig_to_x, G, flux_matrix)
 
-    print('\n> Population sum constraints:')
+    if prnt: print('\n> Population sum constraints:')
     pop_sum_constraints = get_pop_sum_constraints(orig_to_x, G)
 
-    print('\n> Net flux constraints:')
+    if prnt: print('\n> Net flux constraints:')
     net_flux_constraints = get_net_flux_constraints(orig_to_x, flux_map_df,)
 
-    print('\n> Anterograde-retrograde flux ratio constraints:')
+    if prnt: print('\n> Anterograde-retrograde flux ratio constraints:')
     flux_ratio_constraints = get_flux_ratio_constraints(orig_to_x, flux_map_df, 2, 0.2)
 
-    print('\n> Anterograde-retrograde population pair size constraints:')
+    if prnt: print('\n> Anterograde-retrograde population pair size constraints:')
     pop_ratio_constraints = get_pop_ratio_constraints(orig_to_x, G, 2, 0.5)
 
 
@@ -604,8 +626,8 @@ def solve_subgraph_flux(G):
 
     bnds = get_minimizer_bounds(orig_to_x)
     strt = get_minimizer_startval(orig_to_x)
-    total_flux = get_objective_function(orig_to_x)
-
+    
+    total_flux = get_objective_function(orig_to_x, flux_map_df)
 
     print('\n> Optimizing flux values...')
     solution = minimize(
@@ -616,17 +638,17 @@ def solve_subgraph_flux(G):
         constraints=cons,
         options={'disp':True, 'maxiter':5000},
         )
-
     results = np.round(solution.x, 4)
 
-    print('\n> Solved flux dataframe:')
+    if prnt: print('\n> Solved flux dataframe:')
     flux_map_df = update_flux_map_df(G, flux_map_df, results, orig_to_x)
-    print(flux_map_df)
+    if prnt: print(flux_map_df)
 
     print('\n> Solved net flux matrix:')
     flux_matrix = update_flux_matrix(flux_matrix, flux_map_df)
-    mat_print(np.round(flux_matrix, 2))
+    print(np.round(flux_matrix, 2))
 
     flux_dict = {(row['u'], row['v']):row['flux_rate'] for i, row in flux_map_df.iterrows()} 
+    total_outflow = get_soma_outflow_requirement(flux_map_df)
 
-    return flux_dict
+    return flux_dict, total_outflow
