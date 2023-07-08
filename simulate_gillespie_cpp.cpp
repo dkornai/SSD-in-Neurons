@@ -49,12 +49,13 @@ vec_long get_long_vec_from_np(
     return vec;
 }
 
-// check that all mutants are dead (every second element of the state vector == 0)
-bool all_mutants_dead(
-    const   vec_long    vec
+// check that all wildtypes or mutant are dead
+bool takeover(
+    const   vec_long    vec,
+    const   int         offset // offset of 0 is wt, offset of 1 is mt
     ) 
 {
-    for (size_t i = 1; i < vec.size(); i += 2) {
+    for (size_t i = offset; i < vec.size(); i += 2) {
         if (vec[i] != 0) {
             return false;
         }
@@ -138,49 +139,56 @@ void simulate(
     // actual simulation part //
     for (int i = 0; i < n_time_points; ++i) {
         
-        // while the next time point is reached
-        while (t < time_points[i]) {
-            
-            // update birth rates in all nodes with active population size control
-            for (int j = 0; j < n_birthrate_updates; j+=2) {
-                // but only if the population sizes changed in the previous iteration
-                if (sys_state[j] != prev_state[j] or sys_state[j+1] != prev_state[j+1]) {
-                    
-                    birth_rate = mu + c_b*(nss-sys_state[j]-(delta*sys_state[j+1]));
-                    if (birth_rate < 0) // check for negative rates (possible if e.p.s. > nss)
-                        birth_rate = 0; 
-                    
-                    react_rates[j] = react_rates[j+1] = birth_rate; // set corresponding birth rates for the nodes
-                }
-            }
-            
-            // record the current state of the compartments with active population size control
-            std::copy(sys_state.begin(), sys_state.begin() + n_birthrate_updates, prev_state.begin());
-
-            propensity_sum = 0.0;
-            for (int j = 0; j < n_reactions; j++) {
-                // calculate global reaction propensity by multiplyin per capita rates with the number of reactants
-                react_propen[j] = react_rates[j]*sys_state[state_index[j]];
-                // keep track of the sum of global propensities
-                propensity_sum += react_propen[j];
-            }
-
-            // if there exist any reactions (e.g. all reaction rates > 0, all reactants present at > 0)
-            if (propensity_sum != 0.0) {
-                // get the reaction
-                reaction_index = random_event_pmf(react_propen);  
-            
-                // apply the reaction to the state of the system
-                for (int j = 0; j < n_pops; j++) {
-                    sys_state[j] += reactions(reaction_index,j);          
+        // if the system has all mutants, or all wildtypes, the system state will not change, so all further samples can be set to the current state
+        if ((takeover(sys_state, 0) or takeover(sys_state, 1)) and t > (10 + time_points[0])) {
+            // do nothing
+    
+        // otherwise do the actual simulation    
+        } else {
+            // while the next time point is reached
+            while (t < time_points[i]) {
+                
+                // update birth rates in all nodes with active population size control
+                for (int j = 0; j < n_birthrate_updates; j+=2) {
+                    // but only if the population sizes changed in the previous iteration
+                    if (sys_state[j] != prev_state[j] or sys_state[j+1] != prev_state[j+1]) {
+                        
+                        birth_rate = mu + c_b*(nss-sys_state[j]-(delta*sys_state[j+1]));
+                        if (birth_rate < 0) // check for negative rates (possible if e.p.s. > nss)
+                            birth_rate = 0; 
+                        
+                        react_rates[j] = react_rates[j+1] = birth_rate; // set corresponding birth rates for the nodes
+                    }
                 }
                 
-                // increment time forward
-                t += random_sample_exponential(propensity_sum);
-            
-            // if no reactions occur with probability > 0 (the system is empty), the state of the system will never change
-            } else {
-                t += 0.1;
+                // record the current state of the compartments with active population size control
+                std::copy(sys_state.begin(), sys_state.begin() + n_birthrate_updates, prev_state.begin());
+
+                propensity_sum = 0.0;
+                for (int j = 0; j < n_reactions; j++) {
+                    // calculate global reaction propensity by multiplyin per capita rates with the number of reactants
+                    react_propen[j] = react_rates[j]*sys_state[state_index[j]];
+                    // keep track of the sum of global propensities
+                    propensity_sum += react_propen[j];
+                }
+
+                // if there exist any reactions (e.g. all reaction rates > 0, all reactants present at > 0)
+                if (propensity_sum != 0.0) {
+                    // get the reaction
+                    reaction_index = random_event_pmf(react_propen);  
+                
+                    // apply the reaction to the state of the system
+                    for (int j = 0; j < n_pops; j++) {
+                        sys_state[j] += reactions(reaction_index,j);          
+                    }
+                    
+                    // increment time forward
+                    t += random_sample_exponential(propensity_sum);
+                
+                // if no reactions occur with probability > 0 (the system is empty), the state of the system will never change
+                } else {
+                    t += 0.1;
+                }
             }
         }
         
@@ -189,6 +197,7 @@ void simulate(
             sys_state_sample(i,j) = sys_state[j];
         }
 
+        
     }
 }
 
