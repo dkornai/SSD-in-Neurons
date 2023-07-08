@@ -1,7 +1,6 @@
 import numpy as np; np.set_printoptions(suppress=True, linewidth=180)
 import pandas as pd; pd.set_option('display.width', 500)
 from scipy.optimize import minimize
-from scipy.optimize import shgo
 
 def mat_print(data):
     # df=pd.DataFrame(
@@ -596,19 +595,19 @@ def solve_subgraph_flux(G, prnt = False):
 
 
     if prnt: print('\n> Mass conservation constraints:')
-    mass_conserve_constraint = get_mass_conserve_constraints(orig_to_x, G, flux_matrix)
+    mass_conserve_constraint = get_mass_conserve_constraints(orig_to_x, G, flux_matrix, prnt)
 
     if prnt: print('\n> Population sum constraints:')
-    pop_sum_constraints = get_pop_sum_constraints(orig_to_x, G)
+    pop_sum_constraints = get_pop_sum_constraints(orig_to_x, G, prnt)
 
     if prnt: print('\n> Net flux constraints:')
-    net_flux_constraints = get_net_flux_constraints(orig_to_x, flux_map_df,)
+    net_flux_constraints = get_net_flux_constraints(orig_to_x, flux_map_df,prnt)
 
     if prnt: print('\n> Anterograde-retrograde flux ratio constraints:')
-    flux_ratio_constraints = get_flux_ratio_constraints(orig_to_x, flux_map_df, 2, 0.2)
+    flux_ratio_constraints = get_flux_ratio_constraints(orig_to_x, flux_map_df, 2, 0.2, prnt)
 
     if prnt: print('\n> Anterograde-retrograde population pair size constraints:')
-    pop_ratio_constraints = get_pop_ratio_constraints(orig_to_x, G, 2, 0.5)
+    pop_ratio_constraints = get_pop_ratio_constraints(orig_to_x, G, 2, 0.5, prnt)
 
 
     mass_cons_cons = {'type': 'eq', 'fun': mass_conserve_constraint}
