@@ -196,6 +196,24 @@ def draw_helpers(
     
     return node_colors, xy_coordinates, node_radius
 
+
+
+# plot a network derived from the swm file corresponding to a real neuron
+def plot_neuron_graph_realxy(
+        G:              nx.Graph,
+        ):
+    
+    node_colors, xy_coordinates, node_radius = draw_helpers(G)
+
+    assert type(G) == nx.Graph, 'real x-y coordinate plotting only viable for undirected raw network'
+    
+   # drawing using real xy coordinates from swm file
+    fig, ax = plt.subplots(figsize=(10, 10))
+    nx.draw(G, pos=xy_coordinates, node_size=node_radius, ax=ax, node_color = node_colors)
+    
+    plt.show()
+
+
 def subset_layout(G):
     # drawing using layout that shows structure
     A = to_agraph(G) # Convert the networkx graph to a pygraphviz graph
@@ -210,25 +228,18 @@ def subset_layout(G):
 
     return positions
 
-# plot a network derived from the swm file corresponding to a real neuron
-def plot_neuron_graph(
+    # plot a network derived from the swm file corresponding to a real neuron
+def plot_neuron_graph_subset(
         G:              nx.Graph,
-        realxy:         bool = False,
         ):
     
     node_colors, xy_coordinates, node_radius = draw_helpers(G)
 
-    if realxy == True:
-        # drawing using real xy coordinates from swm file
-        fig, ax = plt.subplots(figsize=(10, 10))
-        nx.draw(G, pos=xy_coordinates, node_size=node_radius, ax=ax, node_color = node_colors)
-    
-
     # drawing using layout that shows structure
     A = to_agraph(G) # Convert the networkx graph to a pygraphviz graph
-    
-    # get the xy coordinates from the neato layout engine
 
+    # get the xy coordinates from the neato layout engine
     fig, ax = plt.subplots(figsize=(10, 10))
     nx.draw(G, pos=subset_layout(G), node_size=node_radius, ax=ax, node_color = node_colors)
+    
     plt.show()
