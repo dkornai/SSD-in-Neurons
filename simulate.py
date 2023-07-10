@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 import scipy.integrate as integrate
 
-import libgillespie
+import libsdesim
 
 # wrapper for the ode model
 def simulate_ode(
@@ -30,7 +30,7 @@ def simulate_ode(
 
 
 # wrapper for the c++ gillespie simulator module
-def libgillespie_wrapper(
+def gillespie_wrapper(
         vartup:         tuple[np.ndarray, list, np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]
         ) ->            np.ndarray:
 
@@ -38,11 +38,11 @@ def libgillespie_wrapper(
     time_points, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates = vartup
     
     # create arrays which will be modified in place
-    sys_state           = np.array(start_state, dtype=np.int64)
-    sys_state_sample    = np.zeros((time_points.size, sys_state.size), dtype = np.int64, order = 'F')
+    sys_state           = np.array(start_state, dtype=np.int32)
+    sys_state_sample    = np.zeros((time_points.size, sys_state.size), dtype = np.int32, order = 'F')
 
     # run c++ module, which modifies 'sys_state_sample' in place
-    libgillespie.simulate(
+    libsdesim.sim_gillespie(
         time_points, 
         sys_state, 
         sys_state_sample, 
@@ -66,13 +66,13 @@ def simulate_gillespie(
         ) ->            np.ndarray:
 
     # create array for output
-    replicate_results   = np.zeros((replicates, len(start_state), time_points.size), dtype = np.int64)
+    replicate_results   = np.zeros((replicates, len(start_state), time_points.size), dtype = np.int32)
 
     # create arrays holding simulation parameters
     time_points         = np.array(time_points, dtype = np.float64)
     react_rates         = np.array(gill_param['gillespie']['reaction_rates'], dtype=np.float64)
-    state_index         = np.array(gill_param['gillespie']['state_index'], dtype=np.int64)
-    reactions           = np.array(gill_param['gillespie']['reactions'], dtype=np.int64, order = 'F')
+    state_index         = np.array(gill_param['gillespie']['state_index'], dtype=np.int32)
+    reactions           = np.array(gill_param['gillespie']['reactions'], dtype=np.int32, order = 'F')
     birth_update_par    = np.array(gill_param['update_rate_birth']['rate_update_birth_par'][0], dtype = np.float64)
     n_birth_updates     = int(len(gill_param['update_rate_birth']['rate_update_birth_par'])*2)
 
@@ -87,7 +87,75 @@ def simulate_gillespie(
         pool_results = []
 
         # execute tasks
-        for result in pool.imap_unordered(libgillespie_wrapper, param):
+        for result in pool.imap_unordered(gillespie_wrapper, param):
+            pool_results.append(result)
+            pbar.update(1)
+
+        # write to output array
+        for i in range(replicates): replicate_results[i,:,:] = pool_results[i]
+
+
+    return replicate_results
+
+# wrapper for the c++ gillespie simulator module
+def tauleaping_wrapper(
+        vartup:         tuple[np.ndarray, list, np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]
+        ) ->            np.ndarray:
+
+    # unpack tuple of variables
+    time_points, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates = vartup
+    
+    # create arrays which will be modified in place
+    sys_state           = np.array(start_state, dtype=np.int32)
+    sys_state_sample    = np.zeros((time_points.size, sys_state.size), dtype = np.int32, order = 'F')
+
+    # run c++ module, which modifies 'sys_state_sample' in place
+    libsdesim.sim_tauleaping(
+        time_points, 
+        sys_state, 
+        sys_state_sample, 
+        reactions, 
+        react_rates, 
+        state_index, 
+        birth_update_par, 
+        n_birth_updates
+        )
+
+
+    # transpose and return 
+    return sys_state_sample.transpose(1,0)
+
+# wrapper to simulate using gillespie
+def simulate_tauleaping(
+        gill_param:     dict,
+        time_points:    np.ndarray,
+        start_state:    list,
+        replicates:     int = 100,
+        ) ->            np.ndarray:
+
+    # create array for output
+    replicate_results   = np.zeros((replicates, len(start_state), time_points.size), dtype = np.int32)
+
+    # create arrays holding simulation parameters
+    time_points         = np.array(time_points, dtype = np.float64)
+    react_rates         = np.array(gill_param['gillespie']['reaction_rates'], dtype=np.float64)
+    state_index         = np.array(gill_param['gillespie']['state_index'], dtype=np.int32)
+    reactions           = np.array(gill_param['gillespie']['reactions'], dtype=np.int32, order = 'F')
+    birth_update_par    = np.array(gill_param['update_rate_birth']['rate_update_birth_par'][0], dtype = np.float64)
+    n_birth_updates     = int(len(gill_param['update_rate_birth']['rate_update_birth_par'])*2)
+
+    print('simulating...')
+    pbar = tqdm(total=replicates)
+
+    with Pool() as pool:
+        # prepare arguments as list of tuples
+        param = [(time_points, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates) for _ in range(replicates)]
+        
+        # make list that unordered results will be deposited to
+        pool_results = []
+
+        # execute tasks
+        for result in pool.imap_unordered(tauleaping_wrapper, param):
             pool_results.append(result)
             pbar.update(1)
 

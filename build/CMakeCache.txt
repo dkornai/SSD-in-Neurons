@@ -145,7 +145,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=gillespie
+CMAKE_PROJECT_NAME:STATIC=sdesim
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/home/daniel/anaconda3/bin/x86_64-conda-linux-gnu-ranlib
@@ -233,6 +233,15 @@ gillespie_SOURCE_DIR:STATIC=/home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_N
 
 //The directory containing a CMake configuration file for pybind11.
 pybind11_DIR:PATH=/home/daniel/anaconda3/share/cmake/pybind11
+
+//Value Computed by CMake
+sdesim_BINARY_DIR:STATIC=/home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron/build
+
+//Value Computed by CMake
+sdesim_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+sdesim_SOURCE_DIR:STATIC=/home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron
 
 
 ########################

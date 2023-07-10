@@ -1,3 +1,3 @@
-/home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron/build/CMakeFiles/gillespie.dir
+/home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron/build/CMakeFiles/sdesim.dir
 /home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron/build/CMakeFiles/edit_cache.dir
 /home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron/build/CMakeFiles/rebuild_cache.dir

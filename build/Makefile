@@ -117,41 +117,41 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named gillespie
+# Target rules for targets named sdesim
 
 # Build rule for target.
-gillespie: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gillespie
-.PHONY : gillespie
+sdesim: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sdesim
+.PHONY : sdesim
 
 # fast build rule for target.
-gillespie/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/gillespie.dir/build.make CMakeFiles/gillespie.dir/build
-.PHONY : gillespie/fast
+sdesim/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sdesim.dir/build.make CMakeFiles/sdesim.dir/build
+.PHONY : sdesim/fast
 
-simulate_gillespie_cpp.o: simulate_gillespie_cpp.cpp.o
-.PHONY : simulate_gillespie_cpp.o
+sdesim.o: sdesim.cpp.o
+.PHONY : sdesim.o
 
 # target to build an object file
-simulate_gillespie_cpp.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/gillespie.dir/build.make CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.o
-.PHONY : simulate_gillespie_cpp.cpp.o
+sdesim.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sdesim.dir/build.make CMakeFiles/sdesim.dir/sdesim.cpp.o
+.PHONY : sdesim.cpp.o
 
-simulate_gillespie_cpp.i: simulate_gillespie_cpp.cpp.i
-.PHONY : simulate_gillespie_cpp.i
+sdesim.i: sdesim.cpp.i
+.PHONY : sdesim.i
 
 # target to preprocess a source file
-simulate_gillespie_cpp.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/gillespie.dir/build.make CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.i
-.PHONY : simulate_gillespie_cpp.cpp.i
+sdesim.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sdesim.dir/build.make CMakeFiles/sdesim.dir/sdesim.cpp.i
+.PHONY : sdesim.cpp.i
 
-simulate_gillespie_cpp.s: simulate_gillespie_cpp.cpp.s
-.PHONY : simulate_gillespie_cpp.s
+sdesim.s: sdesim.cpp.s
+.PHONY : sdesim.s
 
 # target to generate assembly for a file
-simulate_gillespie_cpp.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/gillespie.dir/build.make CMakeFiles/gillespie.dir/simulate_gillespie_cpp.cpp.s
-.PHONY : simulate_gillespie_cpp.cpp.s
+sdesim.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sdesim.dir/build.make CMakeFiles/sdesim.dir/sdesim.cpp.s
+.PHONY : sdesim.cpp.s
 
 # Help Target
 help:
@@ -161,10 +161,10 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... gillespie"
-	@echo "... simulate_gillespie_cpp.o"
-	@echo "... simulate_gillespie_cpp.i"
-	@echo "... simulate_gillespie_cpp.s"
+	@echo "... sdesim"
+	@echo "... sdesim.o"
+	@echo "... sdesim.i"
+	@echo "... sdesim.s"
 .PHONY : help
 
 

@@ -63,7 +63,7 @@ CMAKE_BINARY_DIR = /home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron/bui
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/gillespie.dir/all
+all: CMakeFiles/sdesim.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -71,34 +71,34 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/gillespie.dir/clean
+clean: CMakeFiles/sdesim.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/gillespie.dir
+# Target rules for target CMakeFiles/sdesim.dir
 
 # All Build rule for target.
-CMakeFiles/gillespie.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/gillespie.dir/build.make CMakeFiles/gillespie.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/gillespie.dir/build.make CMakeFiles/gillespie.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron/build/CMakeFiles --progress-num=1,2 "Built target gillespie"
-.PHONY : CMakeFiles/gillespie.dir/all
+CMakeFiles/sdesim.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sdesim.dir/build.make CMakeFiles/sdesim.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sdesim.dir/build.make CMakeFiles/sdesim.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron/build/CMakeFiles --progress-num=1,2 "Built target sdesim"
+.PHONY : CMakeFiles/sdesim.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/gillespie.dir/rule: cmake_check_build_system
+CMakeFiles/sdesim.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron/build/CMakeFiles 2
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/gillespie.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/sdesim.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/daniel/Projects/2023_Jones_Lab_mtDNA/SSD/SSD_Neuron/build/CMakeFiles 0
-.PHONY : CMakeFiles/gillespie.dir/rule
+.PHONY : CMakeFiles/sdesim.dir/rule
 
 # Convenience name for target.
-gillespie: CMakeFiles/gillespie.dir/rule
-.PHONY : gillespie
+sdesim: CMakeFiles/sdesim.dir/rule
+.PHONY : sdesim
 
 # clean rule for target.
-CMakeFiles/gillespie.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/gillespie.dir/build.make CMakeFiles/gillespie.dir/clean
-.PHONY : CMakeFiles/gillespie.dir/clean
+CMakeFiles/sdesim.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sdesim.dir/build.make CMakeFiles/sdesim.dir/clean
+.PHONY : CMakeFiles/sdesim.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.
