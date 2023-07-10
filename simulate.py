@@ -99,11 +99,11 @@ def simulate_gillespie(
 
 # wrapper for the c++ gillespie simulator module
 def tauleaping_wrapper(
-        vartup:         tuple[np.ndarray, list, np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]
+        vartup:         tuple[np.ndarray, float, list, np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]
         ) ->            np.ndarray:
 
     # unpack tuple of variables
-    time_points, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates = vartup
+    time_points, timestep, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates = vartup
     
     # create arrays which will be modified in place
     sys_state           = np.array(start_state, dtype=np.int32)
@@ -111,7 +111,8 @@ def tauleaping_wrapper(
 
     # run c++ module, which modifies 'sys_state_sample' in place
     libsdesim.sim_tauleaping(
-        time_points, 
+        time_points,
+        timestep, 
         sys_state, 
         sys_state_sample, 
         reactions, 
@@ -131,6 +132,7 @@ def simulate_tauleaping(
         time_points:    np.ndarray,
         start_state:    list,
         replicates:     int = 100,
+        timestep:       float = 0.01,
         ) ->            np.ndarray:
 
     # create array for output
@@ -149,7 +151,7 @@ def simulate_tauleaping(
 
     with Pool() as pool:
         # prepare arguments as list of tuples
-        param = [(time_points, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates) for _ in range(replicates)]
+        param = [(time_points, timestep, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates) for _ in range(replicates)]
         
         # make list that unordered results will be deposited to
         pool_results = []

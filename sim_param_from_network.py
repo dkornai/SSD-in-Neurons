@@ -59,10 +59,10 @@ def start_state_from_nodes(
     
     start_state = []
     
-    assert 0 <= heteroplasmy <= 1, 'heteroplasmy must be between 0 and 1'
+    assert 0 <= heteroplasmy <= 1, 'heteroplasmy must obey: 0 <= heteroplasmy <= 1'
     if heteroplasmy != 0:
         assert delta != 0, 'delta value must be specified if heteroplasmy is not 0'
-        assert 0 <= delta <= 1, 'delta must be between 0 and 1'
+        assert 0 < delta < 1, 'if heteroplasmy is not 0, delta must obey: 0 < delta < 1'
 
     for node, data in G.nodes(data =True):
         wt_pop, mt_pop = wt_mt_count(data['nss'], delta, heteroplasmy)
