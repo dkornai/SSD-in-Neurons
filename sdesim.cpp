@@ -18,10 +18,11 @@ using vec_int = std::vector<int>;
 using vec_double = std::vector<double>;
 
 typedef py::array_t<double> np_vec_f64; // 1d np.float64 array
-typedef py::array_t<int> np_vec_i32; // 1d np.int64 array 
+typedef py::array_t<int> np_vec_i32; // 1d np.int32 array 
 
-// 
-typedef Eigen::Ref<Eigen::MatrixXi> np_mat_i32; // 2d np.int64 array 
+typedef Eigen::Ref<Eigen::MatrixXi> np_mat_i32; // 2d np.int32 array 
+
+typedef Eigen::DiagonalMatrix<int, Eigen::Dynamic> Eigen_diag_mat; // diagonalized matrix
 
 // HELPER FUNCTIONS //
 
@@ -49,6 +50,7 @@ vec_int get_int_vec_from_np(
     return vec;
 }
 
+// Eigen int vector from np.int32 array
 Eigen::VectorXi get_eig_int_vec_from_np(py::array_t<int> input) {
     py::buffer_info buf = input.request();
     if (buf.ndim != 1) {
@@ -63,8 +65,8 @@ Eigen::VectorXi get_eig_int_vec_from_np(py::array_t<int> input) {
 
 // check that all wildtypes or mutant are dead
 bool takeover(
-    const   vec_int    vec,
-    const   int         offset // offset of 0 is wt, offset of 1 is mt
+    const   Eigen::VectorXi vec,
+    const   int             offset // offset of 0 is wt, offset of 1 is mt
     ) 
 {
     for (size_t i = offset; i < vec.size(); i += 2) {
@@ -73,34 +75,6 @@ bool takeover(
         }
     }
     return true;
-}
-
-// draw samples from an exponential with a specified rate
-double random_sample_exponential(
-    const   double     rate
-    ) 
-{
-    // initialized only once the first time the function is called
-    static std::mt19937 gen(std::random_device{}());
-    
-    // generate random number from exponential dist.
-    std::exponential_distribution<double> dist(rate);
-    return dist(gen);
-}
-
-
-// function to sample an index from an array of probabilities associated with reactions
-int random_event_pmf(
-    const   vec_double& react_probal
-    ) 
-{
-    // initialized only once the first time the function is called
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-
-    // sample from the p.m.f. defined by 'react_probal'
-    std::discrete_distribution<> dist(react_probal.begin(), react_probal.end());
-    return dist(gen);
 }
 
 
@@ -112,43 +86,47 @@ void sim_gillespie(
             np_mat_i32      sys_state_sample,           // array where the 'sys_state' is recorded at each time in 'time_points'
             
     const   np_mat_i32      reactions,                  // 'sys_state' updates corresponding to each possible reaction
-    const   np_vec_f64      in_react_rates,             // per capita reaction rates
+    const   np_vec_f64      in_percap_r_rates,             // per capita reaction rates
     const   np_vec_i32      in_state_index,             // indeces of system state variables from which propensity is calculated
 
     const   np_vec_f64      in_birthrate_updates_par,   // parameters used to update dynamic birth rates
     const   int             n_birthrate_updates         // number of birth rate reactions which must be updated
     )
 {
+    // ### VARIABLE SETUP #### //
+
     // c++ versions of numpy arrays
     const   vec_double      time_points     = get_double_vec_from_np(in_time_points);
-            vec_double      react_rates     = get_double_vec_from_np(in_react_rates);
+            vec_double      percap_r_rates  = get_double_vec_from_np(in_percap_r_rates);
     const   vec_int         state_index     = get_int_vec_from_np(in_state_index);
-            vec_int         sys_state       = get_int_vec_from_np(in_sys_state);
-    const   vec_double      br_up_par       = get_double_vec_from_np(in_birthrate_updates_par);
-
+            Eigen::VectorXi sys_state       = get_eig_int_vec_from_np(in_sys_state);
+   
     // counts often accessed during loops
     const   int             n_time_points   = time_points.size();
-    const   int             n_pops          = sys_state.size();
     const   int             n_reactions     = state_index.size();
 
     // variables used in calculating the dynamic birth rate in compartment 0
+    const   vec_double      br_up_par       = get_double_vec_from_np(in_birthrate_updates_par);
     const   double          c_b             = br_up_par[0];
     const   double          mu              = br_up_par[1];
     const   double          nss             = br_up_par[2];
     const   double          delta           = br_up_par[3];
+    const   double          br_helper1      = mu + c_b * nss;   // precomputed values that do not change across iterations
+    const   double          br_helper2      = c_b * delta;    
     
-    // variables rewritten throughout simulation
-            double          t               = time_points[0];
-
-            double          birth_rate;                         // birthrate
-            vec_double      prev_state(n_birthrate_updates, -1);// previous state of the nodes with birth rate updates
-            
-            int            reaction_index;
-            vec_double      react_propen(n_reactions);
-            double          propensity_sum  = 0.0;
+    // variables used for calculating event rates
+            vec_double      global_r_rates(n_reactions);        // global rate of each reaction
+            double          propensity_sum;                     // sum of global reaction rates
 
         
-    // actual simulation part //
+    // ### SIMULATOR #### //
+
+    // init a random generator
+    static std::mt19937 gen(std::random_device{}());
+
+
+    double t = time_points[0];
+    // loop through the time points to sample
     for (int i = 0; i < n_time_points; ++i) {
         
         // if the system has all mutants, or all wildtypes, the system state will not change, so all further samples can be set to the current state
@@ -157,82 +135,38 @@ void sim_gillespie(
     
         // otherwise do the actual simulation    
         } else {
-            // while the next time point is reached
+            // while the next time point to sample is reached
             while (t < time_points[i]) {
                 
-                // update birth rates in all nodes with active population size control
+                // avoiding negative values, calculate dynamic birth rates in nodes with active birthrate control, and set corresponding reaction rates
                 for (int j = 0; j < n_birthrate_updates; j+=2) {
-                    // but only if the population sizes changed in the previous iteration
-                    if (sys_state[j] != prev_state[j] or sys_state[j+1] != prev_state[j+1]) {
-                        
-                        birth_rate = mu + c_b*(nss-sys_state[j]-(delta*sys_state[j+1]));
-                        if (birth_rate < 0) // check for negative rates (possible if e.p.s. > nss)
-                            birth_rate = 0; 
-                        
-                        react_rates[j] = react_rates[j+1] = birth_rate; // set corresponding birth rates for the nodes
-                    }
+                    percap_r_rates[j] = percap_r_rates[j+1] = std::max(0.0, br_helper1 - c_b*sys_state[j] - br_helper2*sys_state[j+1]); 
                 }
                 
-                // record the current state of the compartments with active population size control
-                std::copy(sys_state.begin(), sys_state.begin() + n_birthrate_updates, prev_state.begin());
-
-                propensity_sum = 0.0;
+                // calculate global reaction propensity by multiplyin per capita rates with the number of reactants, while keeping track of their cumsum
+                propensity_sum = 0;
                 for (int j = 0; j < n_reactions; j++) {
-                    // calculate global reaction propensity by multiplyin per capita rates with the number of reactants
-                    react_propen[j] = react_rates[j]*sys_state[state_index[j]];
-                    // keep track of the sum of global propensities
-                    propensity_sum += react_propen[j];
+                    global_r_rates[j] = percap_r_rates[j]*sys_state[state_index[j]];
+                    propensity_sum += global_r_rates[j];
                 }
 
-                // if there exist any reactions (e.g. all reaction rates > 0, all reactants present at > 0)
-                if (propensity_sum != 0.0) {
-                    // get the reaction
-                    reaction_index = random_event_pmf(react_propen);  
+                // get the reaction and apply the reaction to the state of the system
+                std::discrete_distribution<> react_pmf(global_r_rates.begin(), global_r_rates.end());
+                sys_state += reactions.row(react_pmf(gen));          
                 
-                    // apply the reaction to the state of the system
-                    for (int j = 0; j < n_pops; j++) {
-                        sys_state[j] += reactions(reaction_index,j);          
-                    }
-                    
-                    // increment time forward
-                    t += random_sample_exponential(propensity_sum);
+                // increment time forward
+                std::exponential_distribution<> expdist(propensity_sum);
+                t += expdist(gen);
                 
-                // if no reactions occur with probability > 0 (the system is empty), the state of the system will never change
-                } else {
-                    t += 0.1;
-                }
             }
         }
         
         // write the current state of the system to the output array
-        for (int j = 0; j < n_pops; ++j) {
-            sys_state_sample(i,j) = sys_state[j];
-        }
-
+        sys_state_sample.row(i) = sys_state;
         
     }
 }
 
-
-// get the change in the system state due to the number of events (n_events_per_reaction_type[i]) events occuring for each reaction (reactions[i])
-Eigen::VectorXi get_system_state_change(
-    const   Eigen::VectorXi&    n_events_per_reaction, 
-    const   Eigen::MatrixXi&    reactions
-    ) 
-{
-    
-    static Eigen::DiagonalMatrix<int, Eigen::Dynamic> diagonalized_vector(reactions.rows());
-    // make a diagonalized matrix from the vector holding the number of events
-    diagonalized_vector.diagonal() = n_events_per_reaction;
-
-    
-    static Eigen::MatrixXi product(reactions.rows(), reactions.cols());
-    // Multiply the diagonalized_vector by the 'reactions' matrix to get the change in the system change bought about by a set number of each reaction type
-    product = diagonalized_vector * reactions;
-
-    // Perform a column-wise sum of the resulting matrix to get the over all change in the system state
-    return product.colwise().sum();
-}
 
 // TAU LEAPING FUNCTION //
 void sim_tauleaping(
@@ -243,88 +177,76 @@ void sim_tauleaping(
             np_mat_i32      sys_state_sample,           // array where the 'sys_state' is recorded at each time in 'time_points'
             
     const   np_mat_i32      reactions,                  // 'sys_state' updates corresponding to each possible reaction
-    const   np_vec_f64      in_react_rates,             // per capita reaction rates
+    const   np_vec_f64      in_percap_r_rates,             // per capita reaction rates
     const   np_vec_i32      in_state_index,             // indeces of system state variables from which propensity is calculated
 
     const   np_vec_f64      in_birthrate_updates_par,   // parameters used to update dynamic birth rates
     const   int             n_birthrate_updates         // number of birth rate reactions which must be updated
     )
-{
+{   
+    // ### VARIABLE SETUP #### //
+
     // c++ versions of numpy arrays
     const   vec_double      time_points     = get_double_vec_from_np(in_time_points);
-            vec_double      percap_r_rates  = get_double_vec_from_np(in_react_rates);
+            vec_double      percap_r_rates  = get_double_vec_from_np(in_percap_r_rates);
     const   vec_int         state_index     = get_int_vec_from_np(in_state_index);
             Eigen::VectorXi sys_state       = get_eig_int_vec_from_np(in_sys_state);
-    const   vec_double      br_up_par       = get_double_vec_from_np(in_birthrate_updates_par);
-
+            
     // counts often accessed during loops
     const   int             n_time_points   = time_points.size();
-    const   int             n_pops          = sys_state.size();
     const   int             n_reactions     = state_index.size();
+    const   int             n_pops          = sys_state.size();
 
-    // variables used in calculating the dynamic birth rate in compartment 0
+    // variables used in calculating the dynamic birth rates
+    const   vec_double      br_up_par       = get_double_vec_from_np(in_birthrate_updates_par);
     const   double          c_b             = br_up_par[0];
     const   double          mu              = br_up_par[1];
     const   double          nss             = br_up_par[2];
     const   double          delta           = br_up_par[3];
-            double          br_helper1      = mu + c_b * nss;   // precomputed values that do not change across iterations
-            double          br_helper2      = c_b * delta;    
+    const   double          br_helper1      = mu + c_b * nss;   // precomputed values that do not change across iterations
+    const   double          br_helper2      = c_b * delta;      
     
-    // variables rewritten throughout simulation
-            double          t               = time_points[0];
-            //double          timestep        = 0.01;
+    // variables used to derive the rate of poisson processes
+            Eigen_diag_mat  diagonalized_n_events(n_reactions); // a diagonalized matrix where each element represents the number of times a given reaction occures
+            Eigen::MatrixXi product(n_reactions, n_pops);       // a matrix matrix product of the diagonalized event count matrix and the reaction matrix
 
-            double          birth_rate;                         // birthrate
-            
-            Eigen::VectorXd global_react_rates(n_reactions);    // propensity of each reaction
-            Eigen::VectorXi n_events_per_reaction(n_reactions); // number of times each reaction occurs
-            Eigen::VectorXi state_change(n_pops);               // change in the system state from one time step to the next
+
+    // ### SIMULATOR #### //
 
     // init a random generator
     static std::mt19937 gen(std::random_device{}());
-        
-    // actual simulation part //
+    
+    
+    double t = time_points[0]; 
+    // loop through the time points to sample
     for (int i = 0; i < n_time_points; ++i) {
         
-        // while the next time point is reached
+        // while the next time point to sample the system state is reached
         while (t < time_points[i]) {
             
-            // update birth rates in all nodes with active population size control
+            // avoiding negative values, calculate dynamic birth rates in nodes with active birthrate control, and set corresponding reaction rates
             for (int j = 0; j < n_birthrate_updates; j+=2) {
-                birth_rate = std::max(0.0, br_helper1 - c_b*sys_state[j] - br_helper2*sys_state[j+1]); // avoide negative birth rates
-                percap_r_rates[j] = percap_r_rates[j+1] = birth_rate; // set corresponding birth rates for the nodes
+                percap_r_rates[j] = percap_r_rates[j+1] = std::max(0.0, br_helper1 - c_b*sys_state[j] - br_helper2*sys_state[j+1]); 
             }
 
-            // calculate global reaction propensity by multiplyin per capita rates with the number of reactants
-            for (int j = 0; j < n_reactions; j++) {
-                global_react_rates[j] = percap_r_rates[j]*sys_state[state_index[j]]*timestep;
-            }
-
-            // given the reaction rates, get the number of times each reaction occurs during the timestep using a poisson
+            // calculate rates, and use as mean of poisson, and then generate the number of times each reaction occurs during the timestep.
             for (int j = 0; j < n_reactions; ++j) {
-                std::poisson_distribution<> dist(global_react_rates[j]);
-                n_events_per_reaction[j] = dist(gen);
+                std::poisson_distribution<> dist(percap_r_rates[j]*sys_state[state_index[j]]*timestep);
+                diagonalized_n_events.diagonal()(j) = dist(gen);
             }
 
-            // get the change in the system state corresponding to the number of each reactions
-            state_change = get_system_state_change(n_events_per_reaction, reactions);
-
-            // update the state of the system
-            sys_state += state_change;
-
-            // guarantee that there are no underflows
-            sys_state = sys_state.cwiseMax(0);
+            // update the state of the system by adding each reaction the correct number of times                     
+            product = diagonalized_n_events*reactions;              
+            sys_state += product.colwise().sum();         
+            sys_state = sys_state.cwiseMax(0); // guarantee that there are no underflows
             
             // increment time forward
             t += timestep;
         }
         
         // write the current state of the system to the output array
-        for (int j = 0; j < n_pops; ++j) {
-            sys_state_sample(i,j) = sys_state[j];
-        }
+        sys_state_sample.row(i) = sys_state;
 
-        
     }
 }
 

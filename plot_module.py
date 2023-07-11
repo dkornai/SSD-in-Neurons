@@ -13,24 +13,34 @@ def plot_ODE(
         vars,           # name of the variables being tracked (compartment name + wt/mt)
         comp            # name of the compartments (e.g. soma, axon, etc.)
         ):
-    
+    PLOT_THRESHOLD = 16
+
     n_vars = len(vars)
     n_comp = len(comp)
     
     # plot wildtype and mutant counts in each compartment over time
     plt.subplots(figsize=(10, 5))
     for i in range(n_vars):
-        plt.plot(time_points, results[i], label = vars[i], alpha = 0.7)
-    plt.legend()
+        if n_vars <= PLOT_THRESHOLD:
+            plt.plot(time_points, results[i], label = vars[i], alpha = 0.7)
+        else:
+            plt.plot(time_points, results[i], alpha = 0.7)
+
+    if n_vars <= PLOT_THRESHOLD: plt.legend()
     plt.title('ODE: wt and mt counts in each compartment over time')
 
     # plot heteroplasmy levels in each compartment over time
     plt.subplots(figsize=(10, 5))
     for i in range(n_comp):
         het = results[(i*2)+1]/(results[(i*2)+1]+results[i*2])
-        plt.plot(time_points, het, label = f'{comp[i]} het', alpha = 0.7)
+        if n_comp <= PLOT_THRESHOLD/2:
+            plt.plot(time_points, het, label = f'{comp[i]} het', alpha = 0.7)
+        else:
+            plt.plot(time_points, het, alpha = 0.7)
+
+    if n_comp <= PLOT_THRESHOLD/2: plt.legend()
     plt.ylim([0, 1])
-    plt.legend()
+    
     plt.title('ODE: heteroplasmy in each compartment over time')
 
     # plot effective population sizes over time
@@ -40,22 +50,23 @@ def plot_ODE(
         eps = results[(i*2)+1]*delta + results[i*2]
         if min(eps) < min_eps: min_eps = min(eps)
         if max(eps) > max_eps: max_eps = max(eps)
+        
+        if n_comp <= PLOT_THRESHOLD/2:
+            plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size', alpha = 0.7)
+        else:
+            plt.plot(time_points, eps, alpha = 0.7)
 
-        plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size', alpha = 0.7)
     plt.ylim([round(min_eps-5,0), round(max_eps+5,0)])
-    plt.legend()
+    if n_comp <= PLOT_THRESHOLD/2: plt.legend()
     plt.title('ODE: effective population size in each compartment over time')
     plt.show()
 
     # print parameter values in the final time point
     print("> Final counts of mt and wt in each compartment:")
-    for i in range(n_vars):
-        print(f'{vars[i]}\t{round(results[i,-1], 4)}\t')
+    print([f'{vars[i]}  {round(results[i,-1], 4)}' for i in range(n_vars)])
 
     print("\n> Final effective population sizes in each compartment:")
-    for i in range(n_comp):
-        eps = results[(i*2)+1,-1]*delta + results[i*2,-1]
-        print(f'{comp[i]}\t{round(eps, 4)}\t')
+    print([f'{comp[i]}  {round(results[(i*2)+1,-1]*delta + results[i*2,-1], 4)}' for i in range(n_comp) ])
 
 
 '''
@@ -68,7 +79,8 @@ def plot_gillespie(
         vars,               # name of the variables being tracked (compartment name + wt/mt)
         comp                # name of the compartments (e.g. soma, axon, etc.)
         ):
-    
+    PLOT_THRESHOLD = 16
+
     n_vars = len(vars)
     n_comp = len(comp)
     
@@ -82,9 +94,12 @@ def plot_gillespie(
     for i in range(n_vars):
         counts = np.nanmean(replicate_results[:,i,:], axis = 0)
         mean_per_var_counts.append(counts)
-
-        plt.plot(time_points, counts, label = vars[i], alpha = 0.7)
-    plt.legend()
+        if n_vars <= PLOT_THRESHOLD:
+            plt.plot(time_points, counts, label = vars[i], alpha = 0.7)
+        else:
+            plt.plot(time_points, counts, alpha = 0.7)
+    
+    if n_vars <= PLOT_THRESHOLD:plt.legend()
     plt.title('SDE: mean wt and mt counts in each compartment over time')
 
     # plot heteroplasmy levels in each compartment over time
@@ -94,10 +109,13 @@ def plot_gillespie(
         # calculate mean heteroplasmy as a mean of ratios
         het = np.nanmean(mt_counts[:,i,:]/(mt_counts[:,i,:]+wt_counts[:,i,:]), axis = 0)
         mean_per_comp_het.append(het)
+        if n_comp <= PLOT_THRESHOLD/2:
+            plt.plot(time_points, het, label = f'{comp[i]} het', alpha = 0.7)
+        else:
+            plt.plot(time_points, het, alpha = 0.7)
 
-        plt.plot(time_points, het, label = f'{comp[i]} het', alpha = 0.7)
     plt.ylim([0, 1])
-    plt.legend()
+    if n_comp <= PLOT_THRESHOLD/2: plt.legend()
     plt.title('SDE: mean heteroplasmy in each compartment over time')
 
     # plot effective population sizes over time
@@ -110,24 +128,25 @@ def plot_gillespie(
         if min(eps) < min_eps: min_eps = min(eps)
         if max(eps) > max_eps: max_eps = max(eps)
 
-        plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size', alpha = 0.7)
+        if n_comp <= PLOT_THRESHOLD/2:
+            plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size', alpha = 0.7)
+        else:
+            plt.plot(time_points, eps, alpha = 0.7)
+    
     plt.ylim([round(min_eps-5,0), round(max_eps+5,0)])
-    plt.legend()
+    if n_comp <= PLOT_THRESHOLD/2: plt.legend()
     plt.title('SDE: mean effective population size in each compartment over time')
     plt.show()
 
     # print parameter values in the final time point
     print("> Final mean counts of mt and wt in each compartment:")
-    for i in range(n_vars):
-        print(f'{vars[i]}\t{round(mean_per_var_counts[i][-1], 4)}\t')
+    print([f'{vars[i]}  {round(mean_per_var_counts[i][-1], 4)}' for i in range(n_vars)])
 
     print("\n> Final mean heteroplasmy in each compartment:")
-    for i in range(n_comp):
-        print(f'{comp[i]}\t{round(mean_per_comp_het[i][-1], 4)}\t')
+    print([f'{comp[i]}  {round(mean_per_comp_het[i][-1], 4)}' for i in range(n_comp)])
 
     print("\n> Final mean effective population sizes in each compartment:")
-    for i in range(n_comp):
-        print(f'{comp[i]}\t{round(mean_per_comp_eps[i][-1], 4)}\t')
+    print([f'{comp[i]}  {round(mean_per_comp_eps[i][-1], 4)}' for i in range(n_comp)])
 
     print("\n> Change in mean heteroplasmy: ")
     # get the total sums across every compartment (keeps replicates and time seperate)
