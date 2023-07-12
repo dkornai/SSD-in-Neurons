@@ -6,12 +6,13 @@ from networkx.drawing.nx_agraph import to_agraph
 '''
 Plot the results of a numerical solution to an ODE.
 '''
-def plot_ODE(
+def plot_ode_results(
         results,        # variable values over time (number of wildtype and mutant in each compartment)
         time_points,    # time points where system is sampled
         delta,          # mutant deficiency, used in calculating effective population sizes
         vars,           # name of the variables being tracked (compartment name + wt/mt)
-        comp            # name of the compartments (e.g. soma, axon, etc.)
+        comp,            # name of the compartments (e.g. soma, axon, etc.)
+        prnt = True,
         ):
     PLOT_THRESHOLD = 16
 
@@ -61,24 +62,27 @@ def plot_ODE(
     plt.title('ODE: effective population size in each compartment over time')
     plt.show()
 
-    # print parameter values in the final time point
-    print("> Final counts of mt and wt in each compartment:")
-    print([f'{vars[i]}  {round(results[i,-1], 4)}' for i in range(n_vars)])
+    if prnt:
+        # print parameter values in the final time point
+        print("> Final counts of mt and wt in each compartment:")
+        print([f'{vars[i]}  {round(results[i,-1], 4)}' for i in range(n_vars)])
 
-    print("\n> Final effective population sizes in each compartment:")
-    print([f'{comp[i]}  {round(results[(i*2)+1,-1]*delta + results[i*2,-1], 4)}' for i in range(n_comp) ])
+        print("\n> Final effective population sizes in each compartment:")
+        print([f'{comp[i]}  {round(results[(i*2)+1,-1]*delta + results[i*2,-1], 4)}' for i in range(n_comp) ])
 
 
 '''
 Plot the mean values across many replicate gillespie simulations of the system
 '''
-def plot_gillespie(
+def plot_sde_results(
         replicate_results,  # variable values over time (number of wildtype and mutant in each compartment)
         time_points,        # time points where system is sampled
         delta,              # mutant deficiency, used in calculating effective population sizes
         vars,               # name of the variables being tracked (compartment name + wt/mt)
-        comp                # name of the compartments (e.g. soma, axon, etc.)
+        comp,                # name of the compartments (e.g. soma, axon, etc.)
+        prnt = True,
         ):
+    
     PLOT_THRESHOLD = 16
 
     n_vars = len(vars)
@@ -138,15 +142,16 @@ def plot_gillespie(
     plt.title('SDE: mean effective population size in each compartment over time')
     plt.show()
 
-    # print parameter values in the final time point
-    print("> Final mean counts of mt and wt in each compartment:")
-    print([f'{vars[i]}  {round(mean_per_var_counts[i][-1], 4)}' for i in range(n_vars)])
+    if prnt:
+        # print parameter values in the final time point
+        print("> Final mean counts of mt and wt in each compartment:")
+        print([f'{vars[i]}  {round(mean_per_var_counts[i][-1], 4)}' for i in range(n_vars)])
 
-    print("\n> Final mean heteroplasmy in each compartment:")
-    print([f'{comp[i]}  {round(mean_per_comp_het[i][-1], 4)}' for i in range(n_comp)])
+        print("\n> Final mean heteroplasmy in each compartment:")
+        print([f'{comp[i]}  {round(mean_per_comp_het[i][-1], 4)}' for i in range(n_comp)])
 
-    print("\n> Final mean effective population sizes in each compartment:")
-    print([f'{comp[i]}  {round(mean_per_comp_eps[i][-1], 4)}' for i in range(n_comp)])
+        print("\n> Final mean effective population sizes in each compartment:")
+        print([f'{comp[i]}  {round(mean_per_comp_eps[i][-1], 4)}' for i in range(n_comp)])
 
     print("\n> Change in mean heteroplasmy: ")
     # get the total sums across every compartment (keeps replicates and time seperate)
@@ -154,12 +159,12 @@ def plot_gillespie(
     total_mt = np.sum(mt_counts, axis = 1)
 
     het_start = np.average(total_mt[:,0]/(total_mt[:,0]+total_wt[:,0]), 
-                           axis = 0, 
-                           weights=total_mt[:,0]*delta + total_wt[:,0])
+                        axis = 0, 
+                        weights=total_mt[:,0]*delta + total_wt[:,0])
     print("start:", round(het_start, 4))
     het_final = np.average(total_mt[:,-1]/(total_mt[:,-1]+total_wt[:,-1]), 
-                           axis = 0, 
-                           weights=total_mt[:,-1]*delta + total_wt[:,-1])
+                        axis = 0, 
+                        weights=total_mt[:,-1]*delta + total_wt[:,-1])
     print("final:", round(het_final, 4))
     print("delta:", round(het_final-het_start, 4))
 

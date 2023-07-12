@@ -7,7 +7,7 @@ TAKE AN UNDIRECTED NEURON GRAPH, WITH MARKED SOMA, DENDRITES, AND AXONS, AND TRA
 from copy import deepcopy
 import networkx as nx
 import numpy as np
-from network_generate import net_gen_hub_ring
+from network_generate import net_gen_hub_ring, net_gen_hub_complete
 from neuron_graph_helper import infer_graph_type, get_edges_in_each_branch, get_nodes_in_each_branch
 
 nodetype_dict = {1:'soma', 2:'axon',3:'dendrite'}
@@ -29,11 +29,16 @@ def make_subgraph_tree_directed(
     D.add_nodes_from((n, d) for n, d in G.nodes(data=True) if n in subgraph_nodes)
 
     # mark leaf nodes
-    for node in D.nodes():
-        if node in leaf_nodes:
-            nx.set_node_attributes(D, {node:True},'terminal')
-        else:
-            nx.set_node_attributes(D, {node:False},'terminal')
+    # if the subgraph has only one node, it is terminal
+    if nx.number_of_nodes(D) == 1:
+        nx.set_node_attributes(D, True,'terminal')
+    # otherwise the leaves are terminal
+    else:    
+        for node in D.nodes():
+            if node in leaf_nodes:
+                nx.set_node_attributes(D, {node:True},'terminal')
+            else:
+                nx.set_node_attributes(D, {node:False},'terminal')
 
     # Add edges and their attributes to the directed graph using BFS
     for u, v, d in G.edges(data=True):
@@ -281,11 +286,13 @@ def neuron_graph_transform(
         input_G:                nx.Graph, 
         transform_type:         str, 
         n_soma_nodes:           int,
+        soma_g_type:            str,
         ) ->                    tuple[nx.DiGraph, list[list[str]]]:
 
     assert transform_type in ['circle','ladder','bidirect'], 'transform_type must be "circle", "ladder", or "bidirect"'
     assert n_soma_nodes > 0, 'must have at least 1 node in the soma'
-    
+    assert soma_g_type in ['circle','complete'], 'soma is represented as a circle graph ("circle") or complete graph ("complete")'
+
     G = deepcopy(input_G) # deepcopy to avoid modifying the source graph
     print(f"\n>> Transforming input graph:\n> The undirected input graph has {len(list(G.nodes()))} nodes, and {len(list(G.edges()))} edges.", end = ' ')
 
@@ -297,7 +304,10 @@ def neuron_graph_transform(
     G.remove_edges_from(list(G.edges('1')))
 
     # make soma using the ring generator
-    neuron_g = net_gen_hub_ring(n_nodes=n_soma_nodes)
+    if soma_g_type == 'circle':
+        neuron_g = net_gen_hub_ring(n_nodes=n_soma_nodes)
+    elif soma_g_type == 'complete':
+        neuron_g = net_gen_hub_complete(n_nodes=n_soma_nodes)
     
     # prepare to place each arbor such that they are maximally spread across the ring
     soma_nodes = list(neuron_g.nodes())

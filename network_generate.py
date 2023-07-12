@@ -56,6 +56,42 @@ def net_gen_hub_ring(
     return soma_g
 
 
+# generate the circular network corresponding to the soma
+def net_gen_hub_complete(
+        n_nodes:        int,
+        bio_param:      dict = None,
+        ) ->            nx.DiGraph:
+    
+    # make a circular graph, and transform it to a directed graph
+    soma_g = nx.complete_graph(n_nodes)
+    soma_g = soma_g.to_directed()
+
+    # set node types to signify a soma
+    nx.set_node_attributes(soma_g, 1, "nodetype")
+    nx.set_node_attributes(soma_g, (0,0), "xy")
+    nx.set_node_attributes(soma_g, 2, "radius")
+    # set soma edge types
+    nx.set_edge_attributes(soma_g, 1, "edgetype")
+
+    # if available, set biological node attributes
+    if bio_param != None:
+        nx.set_node_attributes(soma_g, 2,                               "birth_type")
+        nx.set_node_attributes(soma_g, float(bio_param['soma_cb']),     "c_b")
+        nx.set_node_attributes(soma_g, float(bio_param['soma_br']),     "birth_rate")
+        nx.set_node_attributes(soma_g, float(bio_param['death_rate']),  "death_rate")
+        nx.set_node_attributes(soma_g, float(bio_param['soma_nss']),    "nss")
+        nx.set_node_attributes(soma_g, float(bio_param['delta']),       "delta")
+        
+        # add diffusion between soma nodes
+        nx.set_edge_attributes(soma_g, float(bio_param['soma_diffusion']), "rate")
+    
+    # relable nodes as to indicate they are part of the soma
+    rename_dict = {i:f'S{i}B' for i in range(n_nodes)}
+    nx.relabel_nodes(soma_g, rename_dict, copy=False)
+
+
+    return soma_g
+
 
 
 # add a chain of nodes to an existing graph

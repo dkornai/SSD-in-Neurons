@@ -63,18 +63,19 @@ def calculate_death_rate(
     
     if data['nodetype'] == 2: prefix = 'axon'
     elif data['nodetype'] == 3: prefix = 'dendrite'
+    
+    # for terminal nodes, use the basal specific death rate
+    if data['terminal'] == True:
+        death_rate = bio_param[f'{prefix}_death_rate']
 
     # for intermediate nodes, adjust death rate
-    if data['terminal'] == False:
+    elif data['terminal'] == False:
         # get the sum of incoming edge lengths
         total_in_edge_len = total_incoming_edge_length(G, node)
         # at the given transport speed, this distance would be covered in:
         total_travel_time = total_in_edge_len/bio_param[f'{prefix}_transp_speed']
         # during this time, the death rate would be:
         death_rate = round(total_travel_time*bio_param[f'{prefix}_death_rate'], 6)
-    
-    # for terminal nodes, use the basal specific death rate
-    death_rate = bio_param[f'{prefix}_death_rate']
     
     return death_rate
 
@@ -225,10 +226,12 @@ def adjust_soma_birthrate(G, bio_param, total_outflow):
     
     # recalculate birth rate based on the deaths in the soma, and the net outflow
     
-    total_deaths = n_soma_nodes*bio_param['soma_nss']*bio_param['soma_death_rate']
-    total_loss = total_deaths + abs(total_outflow)
-    new_birthrate = round(total_loss/bio_param['soma_nss'],4)
-    print(f"\n> Adjusting soma birth rates to {new_birthrate} to match steady state demand from {total_deaths} deaths in the soma and {round(abs(total_outflow),4)} otflow.")
+    deaths_per_node = bio_param['soma_nss']*bio_param['soma_death_rate']
+    outflow_per_node = abs(total_outflow)/n_soma_nodes
+    total_loss_per_node = deaths_per_node + outflow_per_node
+    new_birthrate = round(total_loss_per_node/bio_param['soma_nss'],4)
+    print(f"\n> Adjusting soma birth rates to {new_birthrate} to match steady state demand from:")
+    print(f"{deaths_per_node*n_soma_nodes} deaths ({deaths_per_node}/node), and {round(abs(total_outflow),4)} net outflow ({round(abs(total_outflow/n_soma_nodes),4)}/node) to the arbors.")
 
     bio_param['soma_nss'] = new_birthrate
 

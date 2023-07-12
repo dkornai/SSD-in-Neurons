@@ -584,70 +584,85 @@ def get_soma_outflow_requirement(flux_map_df):
 
 def solve_subgraph_flux(G, prnt = False):
 
-    print('> Flux dataframe with unknowns:')
+    
     flux_map_df = flux_map_df_from_subnetwork(G)
     orig_to_x, x_to_orig = get_variable_name_remap(flux_map_df)
-    print(flux_map_df)
-
-    if prnt: print('\n> Net flux matrix with unknowns:')
-    flux_matrix = flux_matrix_from_subnetwork(G, flux_map_df)
-    if prnt: mat_print(flux_matrix)
-
-
-    if prnt: print('\n> Mass conservation constraints:')
-    mass_conserve_constraint = get_mass_conserve_constraints(orig_to_x, G, flux_matrix, prnt)
-
-    if prnt: print('\n> Population sum constraints:')
-    pop_sum_constraints = get_pop_sum_constraints(orig_to_x, G, prnt)
-
-    if prnt: print('\n> Net flux constraints:')
-    net_flux_constraints = get_net_flux_constraints(orig_to_x, flux_map_df,prnt)
-
-    if prnt: print('\n> Anterograde-retrograde flux ratio constraints:')
-    flux_ratio_constraints = get_flux_ratio_constraints(orig_to_x, flux_map_df, 2, 0.2, prnt)
-
-    if prnt: print('\n> Anterograde-retrograde population pair size constraints:')
-    pop_ratio_constraints = get_pop_ratio_constraints(orig_to_x, G, 2, 0.5, prnt)
-
-
-    mass_cons_cons = {'type': 'eq', 'fun': mass_conserve_constraint}
-    pop_sum_cons = {'type': 'eq', 'fun': pop_sum_constraints}
-    net_flux_cons = {'type': 'eq', 'fun': net_flux_constraints}
-    flux_ratio_cons = {'type': 'ineq', 'fun': flux_ratio_constraints}
-    pop_ratio_cons = {'type': 'ineq', 'fun': pop_ratio_constraints}
-    cons = [
-        mass_cons_cons, 
-        pop_sum_cons, 
-        net_flux_cons, 
-        flux_ratio_cons, 
-        pop_ratio_cons
-            ]
-
-    bnds = get_minimizer_bounds(orig_to_x)
-    strt = get_minimizer_startval(orig_to_x)
     
-    total_flux = get_objective_function(orig_to_x, flux_map_df)
+    # if there are unknowns that need to be solved with minimization
+    if len(orig_to_x) > 0:
+        print('> Flux dataframe with unknowns:')
+        print(flux_map_df)
 
-    print('\n> Optimizing flux values...')
-    solution = minimize(
-        method='SLSQP',
-        fun = total_flux, 
-        x0 = strt, 
-        bounds = bnds, 
-        constraints=cons,
-        options={'disp':True, 'maxiter':5000},
-        )
-    results = np.round(solution.x, 4)
+        if prnt: print('\n> Net flux matrix with unknowns:')
+        flux_matrix = flux_matrix_from_subnetwork(G, flux_map_df)
+        if prnt: mat_print(flux_matrix)
 
-    if prnt: print('\n> Solved flux dataframe:')
-    flux_map_df = update_flux_map_df(G, flux_map_df, results, orig_to_x)
-    if prnt: print(flux_map_df)
 
-    print('\n> Solved net flux matrix:')
-    flux_matrix = update_flux_matrix(flux_matrix, flux_map_df)
-    print(np.round(flux_matrix, 2))
+        if prnt: print('\n> Mass conservation constraints:')
+        mass_conserve_constraint = get_mass_conserve_constraints(orig_to_x, G, flux_matrix, prnt)
+
+        if prnt: print('\n> Population sum constraints:')
+        pop_sum_constraints = get_pop_sum_constraints(orig_to_x, G, prnt)
+
+        if prnt: print('\n> Net flux constraints:')
+        net_flux_constraints = get_net_flux_constraints(orig_to_x, flux_map_df,prnt)
+
+        if prnt: print('\n> Anterograde-retrograde flux ratio constraints:')
+        flux_ratio_constraints = get_flux_ratio_constraints(orig_to_x, flux_map_df, 2, 0.2, prnt)
+
+        if prnt: print('\n> Anterograde-retrograde population pair size constraints:')
+        pop_ratio_constraints = get_pop_ratio_constraints(orig_to_x, G, 2, 0.5, prnt)
+
+
+        mass_cons_cons = {'type': 'eq', 'fun': mass_conserve_constraint}
+        pop_sum_cons = {'type': 'eq', 'fun': pop_sum_constraints}
+        net_flux_cons = {'type': 'eq', 'fun': net_flux_constraints}
+        flux_ratio_cons = {'type': 'ineq', 'fun': flux_ratio_constraints}
+        pop_ratio_cons = {'type': 'ineq', 'fun': pop_ratio_constraints}
+        cons = [
+            mass_cons_cons, 
+            pop_sum_cons, 
+            net_flux_cons, 
+            flux_ratio_cons, 
+            pop_ratio_cons
+                ]
+
+        bnds = get_minimizer_bounds(orig_to_x)
+        strt = get_minimizer_startval(orig_to_x)
+        
+        total_flux = get_objective_function(orig_to_x, flux_map_df)
+
+        print('\n> Optimizing flux values...')
+        solution = minimize(
+            method='SLSQP',
+            fun = total_flux, 
+            x0 = strt, 
+            bounds = bnds, 
+            constraints=cons,
+            options={'disp':True, 'maxiter':5000},
+            )
+        results = np.round(solution.x, 4)
+
+        if prnt: print('\n> Solved flux dataframe:')
+        flux_map_df = update_flux_map_df(G, flux_map_df, results, orig_to_x)
+        if prnt: print(flux_map_df)
+
+        print('\n> Solved net flux matrix:')
+        flux_matrix = update_flux_matrix(flux_matrix, flux_map_df)
+        print(np.round(flux_matrix, 2))
+
+    # if there are no unknowns, all fluxes could be solved arithmetically (this is the case for example with a one-node arbor)
+    else:
+        print('\n> Fluxes are given arithmetically:')
+        print('> Flux dataframe:')
+        print(flux_map_df)
+        print('> Flux matrix:')
+        flux_matrix = flux_matrix_from_subnetwork(G, flux_map_df)
+        mat_print(flux_matrix)
+
 
     flux_dict = {(row['u'], row['v']):row['flux_rate'] for i, row in flux_map_df.iterrows()} 
     total_outflow = get_soma_outflow_requirement(flux_map_df)
-
+    print(f"> Total outflow to this branch is {abs(total_outflow)} mt/day")
+    
     return flux_dict, total_outflow

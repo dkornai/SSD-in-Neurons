@@ -251,15 +251,16 @@ def ODE_from_network(G, prnt = False):
         elif int(noderow["birth_type"]) == 1:
             birth_term = f"({birthrate})"
         elif int(noderow["birth_type"]) == 2:
-            birth_term = f"({birthrate} + {cb}*({nss}-{var_wt_name}-({delta}*{var_mt_name})))"
+            birth_term = f"(max([0, ({birthrate} + {cb}*({nss}-{var_wt_name}-({delta}*{var_mt_name})))]))"
             
         # generate death rate
         death_term = f"({deathrate})"
         
         # generate terms for outflow
         edges_outrow = df_edges[df_edges['source'] == node_name]
-        out_term = f"({round(edges_outrow['rate'].sum(), 8)})"
         
+        out_term = f"({round(edges_outrow['rate'].sum(), 8)})"
+
         # generate terms for inflow
         edges_inrow = df_edges[df_edges['target'] == node_name]
         in_term = ''
