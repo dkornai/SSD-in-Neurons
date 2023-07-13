@@ -93,7 +93,7 @@ def transp_react(n_pops, source_i, dest_i):
 
 
 #### GENERATE THE HELPER DATASTRUCTURES FOR THE C MODULE THAT DOES THE GILLESPIE SIMULATION ####
-def gillespie_param_from_network(G, prnt=False):
+def sde_param_from_network(G, prnt=False):
     df_nodes, df_edges = dataframes_from_network(G, prnt=False)
     
     node_names_list = list(G.nodes())
@@ -198,7 +198,7 @@ def gillespie_param_from_network(G, prnt=False):
     birthrate_state_index = np.array(birthrate_state_index, dtype = np.int64)
 
     # final output               
-    gillespie_reactions = {'n_reactions':n_reactions,
+    reactions = {'n_reactions':n_reactions,
                         'reactions':reactions, 
                         'reaction_rates':reaction_rates, 
                         'state_index':state_index}
@@ -208,7 +208,7 @@ def gillespie_param_from_network(G, prnt=False):
                         'rate_update_birth_reaction':birthrate_updates_reaction,
                         'birthrate_state_index':birthrate_state_index}
 
-    return {'gillespie': gillespie_reactions, 'update_rate_birth':birthrate_update}
+    return {'reactions': reactions, 'update_rate_birth':birthrate_update}
 
 #### GENERATE CODE FOR THE ODE MODEL OF THE NETWORK ####
 '''
@@ -216,7 +216,7 @@ This is a very very very extremely hacky function that works by collecting the p
 of the differential equations from the parameters encoded in the network, uses this to make
 a text python program, and then evaluates this python program and returns the output. 
 '''
-def ODE_from_network(G, prnt = False):
+def ode_from_network(G, prnt = False):
     # collect data needed to generate the code
     nodenames, compartments = names_from_network(G)
     df_nodes, df_edges = dataframes_from_network(G, prnt=False) 
@@ -251,7 +251,7 @@ def ODE_from_network(G, prnt = False):
         elif int(noderow["birth_type"]) == 1:
             birth_term = f"({birthrate})"
         elif int(noderow["birth_type"]) == 2:
-            birth_term = f"(max([0, ({birthrate} + {cb}*({nss}-{var_wt_name}-({delta}*{var_mt_name})))]))"
+            birth_term = f"({birthrate} + {cb}*({nss}-{var_wt_name}-({delta}*{var_mt_name})))"
             
         # generate death rate
         death_term = f"({deathrate})"

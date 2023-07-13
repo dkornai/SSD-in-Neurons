@@ -10,20 +10,21 @@ def calculate_target_nss(
     
     assert type(G) == nx.Graph, 'target nss values can only be calculated for raw undirected neural graphs'
 
-    print('\n> Inferring target node populations per branch type from section volumes.')
-    
-    n_nodes_per_type = n_nodes_by_type(G)
-    volume_per_type = volume_by_type(G)
+    density_keys = ['soma_mito_density', 'axon_mito_density', 'dendrite_mito_density']
+    nss_keys = ['soma_nss', 'axon_nss', 'dendrite_nss']
 
-    for nss_key, density_key, n_nodes, volume in zip(
-        ['soma_nss', 'axon_nss', 'dendrite_nss'], 
-        ['soma_mito_density', 'axon_mito_density', 'dendrite_mito_density'], 
-        n_nodes_per_type, 
-        volume_per_type
-        ):
+    if any([bio_param[key] == None for key in nss_keys]):
+        print('\n> Inferring target node populations per branch type from section volumes.')
+        
+        assert all([bio_param[key] != None for key in density_keys])
 
-        bio_param[nss_key] = int(round((volume*bio_param[density_key])/n_nodes))
-        print(f"total {nss_key[:-4]} volume is {volume} µm^3 spread across {n_nodes} node(s). At a density of {bio_param[density_key]} mt/µm^3, this gives a target pop. of {bio_param[nss_key]} mt/node")
+        n_nodes_per_type = n_nodes_by_type(G)
+        volume_per_type = volume_by_type(G)
+
+        for nss_key, density_key, n_nodes, volume in zip(nss_keys, density_keys, n_nodes_per_type, volume_per_type):
+            if n_nodes > 0:
+                bio_param[nss_key] = int(round((volume*bio_param[density_key])/n_nodes))
+                print(f"total {nss_key[:-4]} volume is {volume} µm^3 spread across {n_nodes} node(s). At a density of {bio_param[density_key]} mt/µm^3, this gives a target pop. of {bio_param[nss_key]} mt/node")
 
     return bio_param
 
@@ -33,21 +34,27 @@ def calculate_influx_efflux(
         bio_param:  dict
         ) ->        dict:
     
+    n_nodes_per_type = n_nodes_by_type(G)
+
     assert type(G) == nx.Graph, 'target influx and efflux values can only be calculated for raw undirected neural graphs'
-    assert bio_param['axon_nss'] != None and bio_param['dendrite_nss'] != None, 'target influx and efflux values can only be calculated after target nss values have been inferred'
+    if n_nodes_per_type[1] > 0:
+        assert bio_param['axon_nss'] != None , 'target influx and efflux values can only be calculated after target axon nss values have been inferred'
+    if n_nodes_per_type[2] > 0:
+        assert bio_param['dendrite_nss'] != None, 'target influx and efflux values can only be calculated after target dendrite nss values have been inferred'
 
     print('\n> Inferring net influx and efflux at at axon and dendrite terminals.')
     
-    for influx_key, efflux_key, nss_key, death_rate_key in zip(
+    for influx_key, efflux_key, nss_key, death_rate_key, n_nodes in zip(
         ['axon_terminal_influx', 'dendrite_terminal_influx'],
         ['axon_terminal_efflux', 'dendrite_terminal_efflux'],
         ['axon_nss', 'dendrite_nss'],
-        ['axon_death_rate', 'dendrite_death_rate']
+        ['axon_death_rate', 'dendrite_death_rate'],
+        n_nodes_per_type[1:3]
         ):
-
-        bio_param[influx_key] = round(bio_param[nss_key]*bio_param[death_rate_key]*2,2)
-        bio_param[efflux_key] = round(bio_param[nss_key]*bio_param[death_rate_key],2)
-        print(f"at a death rate of {bio_param[death_rate_key]}, a target {nss_key[:-4]} pop. of {bio_param[nss_key]}, requires an influx of {bio_param[influx_key]} mt and an outflow of {bio_param[efflux_key]} mt")
+        if n_nodes > 0:
+            bio_param[influx_key] = round(bio_param[nss_key]*bio_param[death_rate_key]*2,2)
+            bio_param[efflux_key] = round(bio_param[nss_key]*bio_param[death_rate_key],2)
+            print(f"at a death rate of {bio_param[death_rate_key]}, a target {nss_key[:-4]} pop. of {bio_param[nss_key]}, requires an influx of {bio_param[influx_key]} mt and an outflow of {bio_param[efflux_key]} mt")
 
     return bio_param
 
@@ -223,15 +230,18 @@ def add_bioparam_attributes(
 
 def adjust_soma_birthrate(G, bio_param, total_outflow):
     n_soma_nodes = n_nodes_by_type(G)[0]
-    
+
     # recalculate birth rate based on the deaths in the soma, and the net outflow
-    
-    deaths_per_node = bio_param['soma_nss']*bio_param['soma_death_rate']
-    outflow_per_node = abs(total_outflow)/n_soma_nodes
-    total_loss_per_node = deaths_per_node + outflow_per_node
-    new_birthrate = round(total_loss_per_node/bio_param['soma_nss'],4)
+    nss = bio_param['soma_nss']
+    death_rate = bio_param['soma_death_rate']
+    outflow_per_node = total_outflow/n_soma_nodes
+    deaths_per_node = nss*death_rate
+    loss_per_node = deaths_per_node + outflow_per_node
+    new_birthrate = np.round(loss_per_node/bio_param['soma_nss'],6)
+
+
     print(f"\n> Adjusting soma birth rates to {new_birthrate} to match steady state demand from:")
-    print(f"{deaths_per_node*n_soma_nodes} deaths ({deaths_per_node}/node), and {round(abs(total_outflow),4)} net outflow ({round(abs(total_outflow/n_soma_nodes),4)}/node) to the arbors.")
+    print(f"{round(deaths_per_node*n_soma_nodes,4)} deaths ({round(deaths_per_node,4)}/node), and {round(total_outflow,4)} net outflow ({round(outflow_per_node)}/node) to the arbors.")
 
     bio_param['soma_nss'] = new_birthrate
 
