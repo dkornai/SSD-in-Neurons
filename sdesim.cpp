@@ -111,54 +111,100 @@ void sim_gillespie(
     const   double          mu              = br_up_par[1];
     const   double          nss             = br_up_par[2];
     const   double          delta           = br_up_par[3];
-    const   double          br_helper1      = mu + c_b * nss;   // precomputed values that do not change across iterations
-    const   double          br_helper2      = c_b * delta;    
+    const   double          brh1            = mu + c_b * nss;   // precomputed values that do not change across iterations
+    const   double          brh2            = c_b * delta;    
     
     // variables used for calculating event rates
             vec_double      global_r_rates(n_reactions);        // global rate of each reaction
             double          propensity_sum;                     // sum of global reaction rates
 
         
-    // ### SIMULATOR #### //
+    // // ### SIMULATOR #### //
+
+    // // init a random generator
+    // static std::mt19937 gen(std::random_device{}());
+
+
+    // double t = time_points[0];
+    // // loop through the time points to sample
+    // for (int i = 0; i < n_time_points; ++i) {
+        
+    //     // if the system has all mutants, or all wildtypes, the system state will not change, so all further samples can be set to the current state
+    //     if ((takeover(sys_state, 0) or takeover(sys_state, 1)) and t > (10 + time_points[0])) {
+    //         // do nothing
+    
+    //     // otherwise do the actual simulation    
+    //     } else {
+    //         // while the next time point to sample is reached
+    //         while (t < time_points[i]) {
+                
+    //             // avoiding negative values, calculate dynamic birth rates in nodes with active birthrate control, and set corresponding reaction rates
+    //             for (int j = 0; j < n_birthrate_updates; j+=2) {
+    //                 percap_r_rates[j] = percap_r_rates[j+1] = brh1 - c_b*sys_state[j] - brh2*sys_state[j+1]; 
+    //             }
+                
+    //             // calculate global reaction propensity by multiplyin per capita rates with the number of reactants, while keeping track of their cumsum
+    //             propensity_sum = 0;
+    //             for (int j = 0; j < n_reactions; j++) {
+    //                 global_r_rates[j] = percap_r_rates[j]*sys_state[state_index[j]];
+    //                 propensity_sum += global_r_rates[j];
+    //             }
+
+    //             // get the reaction and apply the reaction to the state of the system
+    //             std::discrete_distribution<> react_pmf(global_r_rates.begin(), global_r_rates.end());
+    //             sys_state += reactions.row(react_pmf(gen));          
+                
+    //             // increment time forward
+    //             std::exponential_distribution<> expdist(propensity_sum);
+    //             t += expdist(gen);
+                
+    //         }
+    //     }
+        
+    //     // write the current state of the system to the output array
+    //     sys_state_sample.row(i) = sys_state;
+        
+    // }
+        // ### SIMULATOR #### //
 
     // init a random generator
-    static std::mt19937 gen(std::random_device{}());
+    std::mt19937 gen(std::random_device{}());
 
 
     double t = time_points[0];
     // loop through the time points to sample
     for (int i = 0; i < n_time_points; ++i) {
         
-        // if the system has all mutants, or all wildtypes, the system state will not change, so all further samples can be set to the current state
-        if ((takeover(sys_state, 0) or takeover(sys_state, 1)) and t > (10 + time_points[0])) {
-            // do nothing
-    
-        // otherwise do the actual simulation    
-        } else {
-            // while the next time point to sample is reached
-            while (t < time_points[i]) {
+        while (t < time_points[i]) {
                 
-                // avoiding negative values, calculate dynamic birth rates in nodes with active birthrate control, and set corresponding reaction rates
-                for (int j = 0; j < n_birthrate_updates; j+=2) {
-                    percap_r_rates[j] = percap_r_rates[j+1] = std::max(0.0, br_helper1 - c_b*sys_state[j] - br_helper2*sys_state[j+1]); 
-                }
-                
-                // calculate global reaction propensity by multiplyin per capita rates with the number of reactants, while keeping track of their cumsum
-                propensity_sum = 0;
-                for (int j = 0; j < n_reactions; j++) {
-                    global_r_rates[j] = percap_r_rates[j]*sys_state[state_index[j]];
-                    propensity_sum += global_r_rates[j];
-                }
-
-                // get the reaction and apply the reaction to the state of the system
-                std::discrete_distribution<> react_pmf(global_r_rates.begin(), global_r_rates.end());
-                sys_state += reactions.row(react_pmf(gen));          
-                
-                // increment time forward
-                std::exponential_distribution<> expdist(propensity_sum);
-                t += expdist(gen);
-                
+            // avoiding negative values, calculate dynamic birth rates in nodes with active birthrate control, and set corresponding reaction rates
+            for (int j = 0; j < n_birthrate_updates; j+=2) {
+                //percap_r_rates[j] = percap_r_rates[j+1] = brh1 - c_b*sys_state[j] - brh2*sys_state[j+1]; 
+                percap_r_rates[j] = percap_r_rates[j+1] = std::max(0.0, (mu + c_b*(nss - sys_state[j] - (delta*sys_state[j+1])))); 
             }
+            
+            // calculate global reaction propensity by multiplyin per capita rates with the number of reactants, while keeping track of their cumsum
+            propensity_sum = 0.0;
+            for (int j = 0; j < n_reactions; j++) {
+                global_r_rates[j] = percap_r_rates[j]*sys_state[state_index[j]];
+                propensity_sum += global_r_rates[j];
+            }
+
+            // if the system as died out, break the loop
+            if (propensity_sum == 0.0) {
+                t = time_points[i];
+                break;
+            }
+
+            // get the reaction and apply the reaction to the state of the system
+            std::discrete_distribution<> react_pmf(global_r_rates.begin(), global_r_rates.end());
+            sys_state += reactions.row(react_pmf(gen));          
+            
+            // increment time forward
+            std::exponential_distribution<> expdist(propensity_sum);
+            t += expdist(gen);
+ 
+                
         }
         
         // write the current state of the system to the output array
@@ -203,8 +249,8 @@ void sim_tauleaping(
     const   double          mu              = br_up_par[1];
     const   double          nss             = br_up_par[2];
     const   double          delta           = br_up_par[3];
-    const   double          br_helper1      = mu + c_b * nss;   // precomputed values that do not change across iterations
-    const   double          br_helper2      = c_b * delta;      
+    const   double          brh1            = mu + c_b * nss;   // precomputed values that do not change across iterations
+    const   double          brh2            = c_b * delta;
     
     // variables used to derive the rate of poisson processes
             Eigen_diag_mat  diagonalized_n_events(n_reactions); // a diagonalized matrix where each element represents the number of times a given reaction occures
@@ -214,8 +260,8 @@ void sim_tauleaping(
     // ### SIMULATOR #### //
 
     // init a random generator
-    static std::mt19937 gen(std::random_device{}());
-    
+    std::mt19937 gen(std::random_device{}());
+
     
     double t = time_points[0]; 
     // loop through the time points to sample
@@ -226,7 +272,8 @@ void sim_tauleaping(
             
             // avoiding negative values, calculate dynamic birth rates in nodes with active birthrate control, and set corresponding reaction rates
             for (int j = 0; j < n_birthrate_updates; j+=2) {
-                percap_r_rates[j] = percap_r_rates[j+1] = std::max(0.0, br_helper1 - c_b*sys_state[j] - br_helper2*sys_state[j+1]); 
+                //percap_r_rates[j] = percap_r_rates[j+1] = brh1 - c_b*sys_state[j] - brh2*sys_state[j+1]; 
+                percap_r_rates[j] = percap_r_rates[j+1] = std::max(0.0, (mu + c_b*(nss - sys_state[j] - (delta*sys_state[j+1]))));  
             }
 
             // calculate rates, and use as mean of poisson, and then generate the number of times each reaction occurs during the timestep.

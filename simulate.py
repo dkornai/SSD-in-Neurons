@@ -70,9 +70,9 @@ def simulate_gillespie(
 
     # create arrays holding simulation parameters
     time_points         = np.array(time_points, dtype = np.float64)
-    react_rates         = np.array(gill_param['gillespie']['reaction_rates'], dtype=np.float64)
-    state_index         = np.array(gill_param['gillespie']['state_index'], dtype=np.int32)
-    reactions           = np.array(gill_param['gillespie']['reactions'], dtype=np.int32, order = 'F')
+    react_rates         = np.array(gill_param['reactions']['reaction_rates'], dtype=np.float64)
+    state_index         = np.array(gill_param['reactions']['state_index'], dtype=np.int32)
+    reactions           = np.array(gill_param['reactions']['reactions'], dtype=np.int32, order = 'F')
     birth_update_par    = np.array(gill_param['update_rate_birth']['rate_update_birth_par'][0], dtype = np.float64)
     n_birth_updates     = int(len(gill_param['update_rate_birth']['rate_update_birth_par'])*2)
 
@@ -140,9 +140,9 @@ def simulate_tauleaping(
 
     # create arrays holding simulation parameters
     time_points         = np.array(time_points, dtype = np.float64)
-    react_rates         = np.array(gill_param['gillespie']['reaction_rates'], dtype=np.float64)
-    state_index         = np.array(gill_param['gillespie']['state_index'], dtype=np.int32)
-    reactions           = np.array(gill_param['gillespie']['reactions'], dtype=np.int32, order = 'F')
+    react_rates         = np.array(gill_param['reactions']['reaction_rates'], dtype=np.float64)
+    state_index         = np.array(gill_param['reactions']['state_index'], dtype=np.int32)
+    reactions           = np.array(gill_param['reactions']['reactions'], dtype=np.int32, order = 'F')
     birth_update_par    = np.array(gill_param['update_rate_birth']['rate_update_birth_par'][0], dtype = np.float64)
     n_birth_updates     = int(len(gill_param['update_rate_birth']['rate_update_birth_par'])*2)
 
