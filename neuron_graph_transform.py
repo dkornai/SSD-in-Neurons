@@ -6,9 +6,8 @@ TAKE AN UNDIRECTED NEURON GRAPH, WITH MARKED SOMA, DENDRITES, AND AXONS, AND TRA
 
 from copy import deepcopy
 import networkx as nx
-import numpy as np
 from network_generate import net_gen_hub_ring, net_gen_hub_complete
-from neuron_graph_helper import infer_graph_type, get_edges_in_each_branch, get_nodes_in_each_branch
+from neuron_graph_helper import infer_graph_type, find_subgraphs
 
 nodetype_dict = {1:'soma', 2:'axon',3:'dendrite'}
 nodetype_shortdict = {1:'S', 2:'A',3:'D'}
@@ -218,6 +217,7 @@ def subgraph_transform(
 
     return out_graph, nodes_to_connect
 
+
 # merge a transformed subgraph back into to the full graph
 def subgraph_remerge(
         full_graph:             nx.DiGraph, 
@@ -251,37 +251,13 @@ def subgraph_remerge(
     return full_graph
 
 
+## MAIN FUNCTION ##
+#
+#       Take an undirected graph of a neuron, which contains data about the type of each node and edge (e.g. soma, axon, dendrite),
+#       and transform it into a directed graph representation. The soma is transformed into either a circular or complete graph of 
+#       1 to n nodes. Branches are transformed depending on the model of transport that is chosen. This can be a bidirectional hop, 
+#       a ladder, or a ladder without rungs (circle). The branches are reattached to the soma ring, and evenly spread around.
 
-
-# isolate each arbor (dendrite or axon) in a basic graph
-def find_subgraphs(G, root_node = '1'):
-    
-    subgraphs = []
-
-    # get edges and nodes in each subgraph
-    edges_in_each_subgraph = get_edges_in_each_branch(G, root_node=root_node)
-    nodes_in_each_subgraph = get_nodes_in_each_branch(G, root_node=root_node)
-    for edges, nodes in zip(edges_in_each_subgraph, nodes_in_each_subgraph):
-        subgraphs.append({
-            'type':G.nodes()[nodes[1]]['nodetype'],
-            'type_name':nodetype_dict[G.nodes()[nodes[1]]['nodetype']],
-            'total_volume':round(np.sum([data['volume'] for u, v, data in G.edges(data = True) if (u,v) in edges]), 2),
-            'n_nodes':len(nodes[1:]),
-            'branch_start_node':nodes[1],
-            'branch_start_edge_len':G.edges()[edges[0]]['len'],
-            'branch_nodes':nodes[1:], 
-            'edges':edges
-            })
-    
-    print(f'Found {len(subgraphs)} branches:')
-    for subgraph in subgraphs:
-        print(f"{subgraph['type_name']} of {subgraph['n_nodes']} nodes, total volume is {subgraph['total_volume']} um^3")
-    
-    return subgraphs
-
-
-
-# take an undirected graph of a neuron, and transform it into a directed network
 def neuron_graph_transform(
         input_G:                nx.Graph, 
         transform_type:         str, 
@@ -311,7 +287,7 @@ def neuron_graph_transform(
     
     # prepare to place each arbor such that they are maximally spread across the ring
     soma_nodes = list(neuron_g.nodes())
-    if n_soma_nodes > 1:
+    if n_soma_nodes > 1 and n_subgraphs > 1:
         soma_attach_nodes = [soma_nodes[int(round(i * ((n_soma_nodes-1) / (n_subgraphs - 1))))] for i in range(n_subgraphs)]
     else:
         soma_attach_nodes = [soma_nodes[0] for i in range(n_subgraphs)]
@@ -339,7 +315,7 @@ def neuron_graph_transform(
         
         # connect the nodes forming a subgraph in the outputted graph
         transformed_subgraph_nodes = list(transformed_subgraph.nodes())
-        transformed_subgraph_nodes.append(soma_nodes_to_connect)
+        transformed_subgraph_nodes.insert(0, soma_nodes_to_connect)
         output_subgraphs.append(transformed_subgraph_nodes)
 
     print(f"> the directed output graph has {len(list(neuron_g.nodes()))} nodes, and {len(list(neuron_g.edges()))} edges")

@@ -1,5 +1,8 @@
 from copy import deepcopy
 from collections import Counter
+import os
+import pickle
+
 import networkx as nx
 import numpy as np
 
@@ -7,8 +10,10 @@ nodetype_dict = {1:'soma', 2:'axon',3:'dendrite'}
 nodetype_shortdict = {1:'S', 2:'A',3:'D'}
 
 
-
-
+# number of nodes in the soma, axon, and dendrite
+def n_nodes_by_type(G):
+    node_types = ([int(node[1]['nodetype']) for node in G.nodes(data=True)])
+    return [Counter(node_types)[1], Counter(node_types)[2], Counter(node_types)[3]]
 
 # get the edges in each branch (axon or dendrite)
 def get_edges_in_each_branch(graph, root_node = '1'):
@@ -33,6 +38,45 @@ def get_nodes_in_each_branch(graph, root_node = '1'):
     
     return nodes_in_each_branch
 
+# infer the type of a given subgraph
+def infer_graph_type(G):
+    gtype_i = int(list(G.nodes(data = True))[0][1]['nodetype'])
+    return gtype_i, nodetype_shortdict[gtype_i]
+
+# isolate each arbor (dendrite or axon) in a basic graph
+def find_subgraphs(G, root_node = '1'):
+    
+    subgraphs = []
+
+    # get edges and nodes in each subgraph
+    edges_in_each_subgraph = get_edges_in_each_branch(G, root_node=root_node)
+    nodes_in_each_subgraph = get_nodes_in_each_branch(G, root_node=root_node)
+    for edges, nodes in zip(edges_in_each_subgraph, nodes_in_each_subgraph):
+        subgraphs.append({
+            'type':G.nodes()[nodes[1]]['nodetype'],
+            'type_name':nodetype_dict[G.nodes()[nodes[1]]['nodetype']],
+            'total_volume':round(np.sum([data['volume'] for u, v, data in G.edges(data = True) if (u,v) in edges]), 2),
+            'n_nodes':len(nodes[1:]),
+            'branch_start_node':nodes[1],
+            'branch_start_edge_len':G.edges()[edges[0]]['len'],
+            'branch_nodes':nodes[1:], 
+            'edges':edges
+            })
+    
+    print(f'Found {len(subgraphs)} branches:')
+    for subgraph in subgraphs:
+        print(f"{subgraph['type_name']} of {subgraph['n_nodes']} nodes, total volume is {subgraph['total_volume']} um^3")
+    
+    return subgraphs
+
+# get the root node (soma node) of a given branch subgraph
+def get_subgraph_root_node(G):
+    return [node for node, data in G.nodes(data = True) if data['nodetype'] == 1][0]
+
+
+
+## VOLUME AND LENGTH CALCULATIONS ##
+
 # distance between two points
 def edge_length(input_df, node_id, parent_id):
     node_row = input_df.loc[input_df['comp_id'] == node_id]
@@ -43,6 +87,11 @@ def edge_length(input_df, node_id, parent_id):
     
     # 3d euclidean distance
     return np.round(np.linalg.norm(node_xyz-parent_xyz), 4)
+
+# get the total length of incoming edges to a node
+def total_incoming_edge_length(G, node):
+    incoming_edges = list(G.in_edges(node, data=True))
+    return sum([incoming_edges[i][2].get('len',0) for i in range(len(incoming_edges))])
 
 # distance from a given node to the root
 def distance_to_root(G, target_node, root_node = '1'):
@@ -61,11 +110,6 @@ def edge_volume(input_df, node_id, parent_id):
     r = float(node_row['radius'])
     return np.round(np.pi*r*r*h, 4)
 
-# infer the type of a given subgraph
-def infer_graph_type(G):
-    gtype_i = int(list(G.nodes(data = True))[0][1]['nodetype'])
-    return gtype_i, nodetype_shortdict[gtype_i]
-
 # volume of the soma, axon, and dendrite 
 def volume_by_type(G, prnt = False):
     edge_volumes_and_types = ([(e[2]['volume'], int(e[2]['edgetype'])) for e in G.edges(data=True)])
@@ -83,10 +127,10 @@ def volume_by_type(G, prnt = False):
     
     return absolute_volumes
 
-# number of nodes in the soma, axon, and dendrite
-def n_nodes_by_type(G):
-    node_types = ([int(node[1]['nodetype']) for node in G.nodes(data=True)])
-    return [Counter(node_types)[1], Counter(node_types)[2], Counter(node_types)[3]]
+
+
+
+## FILE OPERATIONS ##
 
 # read a dataframe generated from a .swc file, and generate a graph corresponding to the neuron being described
 def nxgraph_from_swc_df(swc_df):
@@ -112,6 +156,24 @@ def nxgraph_from_swc_df(swc_df):
             )
 
     return G
+
+# load a pickled graph outputted from the processing of an swc graph
+def load_pickled_neuron_graph(file_path):
+    #file_path = fc.selected
+    assert file_path != None, 'No file selected!'
+    assert os.path.isfile(file_path), f'"{file_path}" does not point to a file!'
+
+    file_name = os.path.basename(file_path)
+    name, extension = os.path.splitext(file_name)
+    assert extension == '.pkl', f'selected file must be a pickled nxgraph!'
+
+    with open(file_path, 'rb') as f:
+        G = pickle.load(f)
+
+    return G
+
+
+## GRAPH SIMPLIFICATION ##
 
 # remove intermediate (non-branch, non-leaf, non-root) nodes from a full graph 
 def remove_transition_nodes(G, swc_df):
@@ -143,7 +205,3 @@ def remove_transition_nodes(G, swc_df):
     
     return out_df
 
-# get the total length of incoming edges to a node
-def total_incoming_edge_length(G, node):
-    incoming_edges = list(G.in_edges(node, data=True))
-    return sum([incoming_edges[i][2].get('len',0) for i in range(len(incoming_edges))])

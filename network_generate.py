@@ -35,6 +35,7 @@ def net_gen_hub_ring(
     nx.set_node_attributes(soma_g, 2, "radius")
     # set soma edge types
     nx.set_edge_attributes(soma_g, 1, "edgetype")
+    nx.set_node_attributes(soma_g, 0.0, "net_flux_to_branch")
 
     # if available, set biological node attributes
     if bio_param != None:
@@ -72,6 +73,7 @@ def net_gen_hub_complete(
     nx.set_node_attributes(soma_g, 2, "radius")
     # set soma edge types
     nx.set_edge_attributes(soma_g, 1, "edgetype")
+    nx.set_node_attributes(soma_g, 0.0, "net_flux_to_branch")
 
     # if available, set biological node attributes
     if bio_param != None:
