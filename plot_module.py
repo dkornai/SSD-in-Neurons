@@ -41,7 +41,6 @@ def plot_ode_results(
 
     if n_comp <= PLOT_THRESHOLD/2: plt.legend()
     plt.ylim([0, 1])
-    
     plt.title('ODE: heteroplasmy in each compartment over time')
 
     # plot effective population sizes over time
@@ -60,6 +59,14 @@ def plot_ode_results(
     plt.ylim([round(min_eps-5,0), round(max_eps+5,0)])
     if n_comp <= PLOT_THRESHOLD/2: plt.legend()
     plt.title('ODE: effective population size in each compartment over time')
+
+    # plot total population size
+    plt.subplots(figsize=(10, 5))
+    total_pop = np.sum(results, axis = 0)
+    plt.plot(time_points, total_pop, label = f'total pop. size') 
+    plt.legend()
+    plt.title('ODE: total population over time')
+    plt.ylim([round(min(total_pop)-5,0), round(max(total_pop)+5,0)])
     plt.show()
 
     if prnt:
@@ -91,8 +98,11 @@ def plot_sde_results(
     # separate out wt and mt counts
     wt_counts = replicate_results[:,np.arange(0, n_vars, 2),:]
     mt_counts = replicate_results[:,np.arange(1, n_vars, 2),:]
+    total_wt = np.sum(wt_counts, axis = 1)
+    total_mt = np.sum(mt_counts, axis = 1)
 
-    # plot wildtype and mutant counts in each compartment over time
+
+    ## plot wildtype and mutant counts in each compartment over time
     mean_per_var_counts = []
     plt.subplots(figsize=(10, 5))
     for i in range(n_vars):
@@ -106,23 +116,8 @@ def plot_sde_results(
     if n_vars <= PLOT_THRESHOLD:plt.legend()
     plt.title('SDE: mean wt and mt counts in each compartment over time')
 
-    # plot heteroplasmy levels in each compartment over time
-    mean_per_comp_het = []
-    plt.subplots(figsize=(10, 5))
-    for i in range(n_comp):
-        # calculate mean heteroplasmy as a mean of ratios
-        het = np.nanmean(mt_counts[:,i,:]/(mt_counts[:,i,:]+wt_counts[:,i,:]), axis = 0)
-        mean_per_comp_het.append(het)
-        if n_comp <= PLOT_THRESHOLD/2:
-            plt.plot(time_points, het, label = f'{comp[i]} het', alpha = 0.7)
-        else:
-            plt.plot(time_points, het, alpha = 0.7)
 
-    plt.ylim([0, 1])
-    if n_comp <= PLOT_THRESHOLD/2: plt.legend()
-    plt.title('SDE: mean heteroplasmy in each compartment over time')
-
-    # plot effective population sizes over time
+    ## plot effective population sizes over time
     min_eps = 100000; max_eps = 0
     mean_per_comp_eps = []
     plt.subplots(figsize=(10, 5))
@@ -136,10 +131,49 @@ def plot_sde_results(
             plt.plot(time_points, eps, label = f'{comp[i]} eff. pop. size', alpha = 0.7)
         else:
             plt.plot(time_points, eps, alpha = 0.7)
-    
+
     plt.ylim([round(min_eps-5,0), round(max_eps+5,0)])
     if n_comp <= PLOT_THRESHOLD/2: plt.legend()
     plt.title('SDE: mean effective population size in each compartment over time')
+
+
+    ## plot heteroplasmy levels over time
+    plt.subplots(figsize=(10, 5))
+    total_het = total_mt/(total_mt+total_wt)
+    
+    # Flatten the results and create a corresponding time array
+    times = np.repeat(time_points, total_het.shape[0])
+    flat_results = total_het.flatten(order = 'F')
+
+    # Calculate and plot 2D histogram (heatmap)
+    heatmap, xedges, yedges = np.histogram2d(times, flat_results, bins=[20, 30])
+    cmap = plt.cm.binary  
+    plt.imshow(heatmap.T, origin='lower', aspect='auto', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], cmap=cmap)
+
+    plt.plot(time_points, np.mean(total_het, axis = 0), label = f'mean heteroplasmy') 
+
+    plt.ylim([0, 1])
+    if n_comp <= PLOT_THRESHOLD/2: plt.legend()
+    plt.title('SDE: mean heteroplasmy over time')
+
+
+    ## plot total population size
+    plt.subplots(figsize=(10, 5))
+    total_pop = np.sum(replicate_results, axis = 1)
+    
+    # Flatten the results and create a corresponding time array
+    times = np.repeat(time_points, total_pop.shape[0])
+    flat_results = total_pop.flatten(order = 'F')
+
+    # Calculate and plot 2D histogram (heatmap)
+    heatmap, xedges, yedges = np.histogram2d(times, flat_results, bins=[20, 30])
+    cmap = plt.cm.binary  
+    plt.imshow(heatmap.T, origin='lower', aspect='auto', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], cmap=cmap)
+
+    plt.plot(time_points, np.mean(total_pop, axis = 0), label = f'mean total pop. size') 
+    
+    plt.legend()
+    plt.title('SDE: total population over time')
     plt.show()
 
     if prnt:
@@ -147,24 +181,14 @@ def plot_sde_results(
         print("> Final mean counts of mt and wt in each compartment:")
         print([f'{vars[i]}  {round(mean_per_var_counts[i][-1], 4)}' for i in range(n_vars)])
 
-        print("\n> Final mean heteroplasmy in each compartment:")
-        print([f'{comp[i]}  {round(mean_per_comp_het[i][-1], 4)}' for i in range(n_comp)])
-
         print("\n> Final mean effective population sizes in each compartment:")
         print([f'{comp[i]}  {round(mean_per_comp_eps[i][-1], 4)}' for i in range(n_comp)])
 
     print("\n> Change in mean heteroplasmy: ")
     # get the total sums across every compartment (keeps replicates and time seperate)
-    total_wt = np.sum(wt_counts, axis = 1)
-    total_mt = np.sum(mt_counts, axis = 1)
-
-    het_start = np.average(total_mt[:,0]/(total_mt[:,0]+total_wt[:,0]), 
-                        axis = 0, 
-                        weights=total_mt[:,0]*delta + total_wt[:,0])
+    het_start = np.nanmean(total_het, axis = 0)[0] 
     print("start:", round(het_start, 4))
-    het_final = np.average(total_mt[:,-1]/(total_mt[:,-1]+total_wt[:,-1]), 
-                        axis = 0, 
-                        weights=total_mt[:,-1]*delta + total_wt[:,-1])
+    het_final = np.nanmean(total_het, axis = 0)[-1] 
     print("final:", round(het_final, 4))
     print("delta:", round(het_final-het_start, 4))
 
