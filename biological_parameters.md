@@ -63,7 +63,15 @@ A large proportion (~75-85%) are immotile, and motility is uneven between antero
 
 If the distance between nodes is larger or smaller, scale these values accordingly (e.g. For nodes separated by 500 μm, minimum value would be 3.46 /day )
 
-### 3) birth rate ()
+### 3) mutant density (delta)
+
+Reported values:
+
+~22000 mtDNA at 0% deletion, ~45000 mtDNA at 80% deletions 
+
+~22000 mtDNA at 0% deletion ~35000 mtDNA at 80% deletion
+
+~5% mtDNA at 10% deletion, ~15% at 50% deletion
 
 # mitochondrial distribution
 
