@@ -76,7 +76,7 @@ def simulate_gillespie(
     birth_update_par    = np.array(gill_param['update_rate_birth']['rate_update_birth_par'][0], dtype = np.float64)
     n_birth_updates     = int(len(gill_param['update_rate_birth']['rate_update_birth_par'])*2)
 
-    print('simulating...')
+    print('simulating using gillespie...')
     pbar = tqdm(total=replicates)
 
     with Pool() as pool:
@@ -146,7 +146,7 @@ def simulate_tauleaping(
     birth_update_par    = np.array(gill_param['update_rate_birth']['rate_update_birth_par'][0], dtype = np.float64)
     n_birth_updates     = int(len(gill_param['update_rate_birth']['rate_update_birth_par'])*2)
 
-    print('simulating...')
+    print('simulating using tau leaping...')
     pbar = tqdm(total=replicates)
 
     with Pool() as pool:
