@@ -17,6 +17,8 @@ namespace py = pybind11;
 using vec_int = std::vector<int>;
 using vec_double = std::vector<double>;
 
+
+
 typedef py::array_t<double> np_vec_f64; // 1d np.float64 array
 typedef py::array_t<int> np_vec_i32; // 1d np.int32 array 
 
@@ -63,19 +65,6 @@ Eigen::VectorXi get_eig_int_vec_from_np(py::array_t<int> input) {
     return eigenVector;
 }
 
-// check that all wildtypes or mutant are dead
-bool takeover(
-    const   Eigen::VectorXi vec,
-    const   int             offset // offset of 0 is wt, offset of 1 is mt
-    ) 
-{
-    for (size_t i = offset; i < vec.size(); i += 2) {
-        if (vec[i] != 0) {
-            return false;
-        }
-    }
-    return true;
-}
 
 
 // GILLESPIE FUNCTION //
@@ -118,54 +107,6 @@ void sim_gillespie(
             vec_double      global_r_rates(n_reactions);        // global rate of each reaction
             double          propensity_sum;                     // sum of global reaction rates
 
-        
-    // // ### SIMULATOR #### //
-
-    // // init a random generator
-    // static std::mt19937 gen(std::random_device{}());
-
-
-    // double t = time_points[0];
-    // // loop through the time points to sample
-    // for (int i = 0; i < n_time_points; ++i) {
-        
-    //     // if the system has all mutants, or all wildtypes, the system state will not change, so all further samples can be set to the current state
-    //     if ((takeover(sys_state, 0) or takeover(sys_state, 1)) and t > (10 + time_points[0])) {
-    //         // do nothing
-    
-    //     // otherwise do the actual simulation    
-    //     } else {
-    //         // while the next time point to sample is reached
-    //         while (t < time_points[i]) {
-                
-    //             // avoiding negative values, calculate dynamic birth rates in nodes with active birthrate control, and set corresponding reaction rates
-    //             for (int j = 0; j < n_birthrate_updates; j+=2) {
-    //                 percap_r_rates[j] = percap_r_rates[j+1] = brh1 - c_b*sys_state[j] - brh2*sys_state[j+1]; 
-    //             }
-                
-    //             // calculate global reaction propensity by multiplyin per capita rates with the number of reactants, while keeping track of their cumsum
-    //             propensity_sum = 0;
-    //             for (int j = 0; j < n_reactions; j++) {
-    //                 global_r_rates[j] = percap_r_rates[j]*sys_state[state_index[j]];
-    //                 propensity_sum += global_r_rates[j];
-    //             }
-
-    //             // get the reaction and apply the reaction to the state of the system
-    //             std::discrete_distribution<> react_pmf(global_r_rates.begin(), global_r_rates.end());
-    //             sys_state += reactions.row(react_pmf(gen));          
-                
-    //             // increment time forward
-    //             std::exponential_distribution<> expdist(propensity_sum);
-    //             t += expdist(gen);
-                
-    //         }
-    //     }
-        
-    //     // write the current state of the system to the output array
-    //     sys_state_sample.row(i) = sys_state;
-        
-    // }
-        // ### SIMULATOR #### //
 
     // init a random generator
     std::mt19937 gen(std::random_device{}());
@@ -179,7 +120,6 @@ void sim_gillespie(
                 
             // avoiding negative values, calculate dynamic birth rates in nodes with active birthrate control, and set corresponding reaction rates
             for (int j = 0; j < n_birthrate_updates; j+=2) {
-                //percap_r_rates[j] = percap_r_rates[j+1] = brh1 - c_b*sys_state[j] - brh2*sys_state[j+1]; 
                 percap_r_rates[j] = percap_r_rates[j+1] = std::max(0.0, (mu + c_b*(nss - sys_state[j] - (delta*sys_state[j+1])))); 
             }
             
@@ -266,13 +206,17 @@ void sim_tauleaping(
     double t = time_points[0]; 
     // loop through the time points to sample
     for (int i = 0; i < n_time_points; ++i) {
-        
+
+        // check if the system has completely exhausted, and exit if needed (input array is all 0s anyway)
+        if (sys_state.isZero()) {
+            break;
+        }
+
         // while the next time point to sample the system state is reached
         while (t < time_points[i]) {
             
             // avoiding negative values, calculate dynamic birth rates in nodes with active birthrate control, and set corresponding reaction rates
             for (int j = 0; j < n_birthrate_updates; j+=2) {
-                //percap_r_rates[j] = percap_r_rates[j+1] = brh1 - c_b*sys_state[j] - brh2*sys_state[j+1]; 
                 percap_r_rates[j] = percap_r_rates[j+1] = std::max(0.0, (mu + c_b*(nss - sys_state[j] - (delta*sys_state[j+1]))));  
             }
 
@@ -296,7 +240,6 @@ void sim_tauleaping(
 
     }
 }
-
 
 // PYBIND // 
 PYBIND11_MODULE(libsdesim, m)

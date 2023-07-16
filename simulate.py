@@ -11,6 +11,8 @@ import scipy.integrate as integrate
 
 import libsdesim
 
+
+
 # wrapper for the ode model
 def simulate_ode(
         ODE_model:      Callable, 
@@ -27,6 +29,7 @@ def simulate_ode(
         ) 
     
     return sol.y
+
 
 
 # wrapper for the c++ gillespie simulator module
@@ -97,7 +100,10 @@ def simulate_gillespie(
 
     return replicate_results
 
-# wrapper for the c++ gillespie simulator module
+
+
+
+# wrapper for the c++ tau leaping simulator module
 def tauleaping_wrapper(
         vartup:         tuple[np.ndarray, float, list, np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]
         ) ->            np.ndarray:
@@ -126,7 +132,7 @@ def tauleaping_wrapper(
     # transpose and return 
     return sys_state_sample.transpose(1,0)
 
-# wrapper to simulate using gillespie
+# wrapper to simulate using tau leaping
 def simulate_tauleaping(
         gill_param:     dict,
         time_points:    np.ndarray,
