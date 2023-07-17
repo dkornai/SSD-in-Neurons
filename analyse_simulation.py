@@ -82,16 +82,23 @@ def two_component_statistics(
     
     df = pd.DataFrame.from_dict(res)
 
-    # u test on the original distributions
-    mw_test_p = round(stats.mannwhitneyu(het[:,-1], het[:,0], nan_policy='omit', alternative='greater',).pvalue, 4)
+    stattest_ssd(het[:,0], het[:,-1])
 
-    # wilcox test
-    wilcox_test_p = round(stats.wilcoxon(het[:,-1], het[:,0], nan_policy='omit', alternative='greater',).pvalue, 4)
+    return df
+
+def stattest_ssd(start_het, final_het):
+
+    # u test on the original distributions
+    mw_test_p = round(stats.mannwhitneyu(final_het, start_het, nan_policy='omit', alternative='greater',).pvalue, 4)
+
+    # wilcox test on original distributions
+    wilcox_test_p = round(stats.wilcoxon(final_het, start_het, nan_policy='omit', alternative='greater',).pvalue, 4)
 
     # pooling values and averageing to get normal distributions, before doing a t-test
-    final_het_means = np.nanmean(het[:,-1].reshape(20,-1), axis = 0)
-    start_het_means = np.nanmean(het[:, 0].reshape(20,-1), axis = 0)
+    final_het_means = np.nanmean(final_het.reshape(20,-1), axis = 0)
+    start_het_means = np.nanmean(start_het.reshape(20,-1), axis = 0)
     t_test_p = round(stats.ttest_ind(final_het_means,start_het_means, equal_var=False, alternative='greater', nan_policy='omit').pvalue,4)
+
 
     print("\n> Statistical tests: end heteroplasmy > start heteroplasmy:")
     print(" mann-whitney p-value:", mw_test_p)
@@ -99,4 +106,33 @@ def two_component_statistics(
     print("pooled t-test p-value:", t_test_p)
     print()
 
-    return df
+
+def generalized_statistics(replicate_results, delta):
+    n_replicates, n_vars, n_timepoints = replicate_results.shape
+    
+
+    # wt and mt populations separated for each compartment of each replicate
+    wt_counts = replicate_results[:,np.arange(0, n_vars, 2),:]
+    mt_counts = replicate_results[:,np.arange(1, n_vars, 2),:]
+    
+    # total wt and total mt across each replicate
+    total_wt = np.sum(wt_counts, axis = 1)
+    total_mt = np.sum(mt_counts, axis = 1)
+
+    # total population size
+    ps = np.sum(replicate_results, axis = 1)
+    ps_mean = np.nanmean(ps, axis=0)
+    ps_sem = np.nanstd(ps, axis = 1)/np.sqrt(n_replicates)
+    
+    # proportion of exhausted replicates (ppopulation size == 0)
+    p_ps0 = np.mean(ps == 0, axis=0)
+
+    # effective population size for each replicate
+    eps = total_wt + (delta*total_mt)
+
+    # heteroplasmy of each replicate
+    het = total_mt/(total_wt+total_mt)
+    het_mean = np.nanmean(axis=0)
+    het_sem = np.nanstd(het)/np.sqrt(n_replicates*(1-p_ps0)) # the sample size of is adjusted to account for heteroplasmy not being defined for exhausted cells. 
+
+    
