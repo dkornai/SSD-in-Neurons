@@ -1,0 +1,96 @@
+
+<<<< STARTING SIMULATION WITH C_B = 0.1 >>>>
+
+simulating using gillespie...
+
+> Statistical tests: end heteroplasmy > start heteroplasmy:
+ mann-whitney p-value: 0.0
+  wilcox test p-value: 0.0
+pooled t-test p-value: 0.0
+
+      pop_mean  pop_sem  eps_mean  ...  a_wt_sem  a_mt_mean  a_mt_sem
+0       640.00     0.00    400.00  ...      0.00     160.00      0.00
+1000   1236.33    54.88    398.84  ...      9.16     557.64     36.58
+
+[2 rows x 17 columns]
+
+simulating using tau leaping...
+
+> Statistical tests: end heteroplasmy > start heteroplasmy:
+ mann-whitney p-value: 0.0
+  wilcox test p-value: 0.0
+pooled t-test p-value: 0.0
+
+      pop_mean  pop_sem  eps_mean  ...  a_wt_sem  a_mt_mean  a_mt_sem
+0       640.00     0.00    400.00  ...      0.00     160.00      0.00
+1000   1377.07    47.33    401.48  ...      7.97     653.18     31.74
+
+[2 rows x 17 columns]
+
+
+ ----- 
+
+
+<<<< STARTING SIMULATION WITH C_B = 0.0001 >>>>
+
+simulating using gillespie...
+
+> Statistical tests: end heteroplasmy > start heteroplasmy:
+ mann-whitney p-value: 0.0
+  wilcox test p-value: 0.0043
+pooled t-test p-value: 0.0007
+
+      pop_mean  pop_sem  eps_mean  ...  a_wt_sem  a_mt_mean  a_mt_sem
+0       640.00     0.00    400.00  ...      0.00     160.00       0.0
+1000    821.65    76.87    267.51  ...      8.23     371.43      41.6
+
+[2 rows x 17 columns]
+
+simulating using tau leaping...
+
+> Statistical tests: end heteroplasmy > start heteroplasmy:
+ mann-whitney p-value: 0.0003
+  wilcox test p-value: 0.01
+pooled t-test p-value: 0.0062
+
+      pop_mean  pop_sem  eps_mean  ...  a_wt_sem  a_mt_mean  a_mt_sem
+0        640.0     0.00    400.00  ...      0.00     160.00      0.00
+1000     816.2    71.43    276.12  ...      9.15     362.22     39.58
+
+[2 rows x 17 columns]
+
+
+ ----- 
+
+
+<<<< STARTING SIMULATION WITH C_B = 1e-07 >>>>
+
+simulating using gillespie...
+
+> Statistical tests: end heteroplasmy > start heteroplasmy:
+ mann-whitney p-value: 0.0151
+  wilcox test p-value: 0.2262
+pooled t-test p-value: 0.0599
+
+      pop_mean  pop_sem  eps_mean  ...  a_wt_sem  a_mt_mean  a_mt_sem
+0       640.00     0.00    400.00  ...      0.00     160.00      0.00
+1000    481.95   126.08    213.21  ...     26.03     179.32     59.47
+
+[2 rows x 17 columns]
+
+simulating using tau leaping...
+
+> Statistical tests: end heteroplasmy > start heteroplasmy:
+ mann-whitney p-value: 0.9999
+  wilcox test p-value: 0.8922
+pooled t-test p-value: 0.9165
+
+      pop_mean  pop_sem  eps_mean  ...  a_wt_sem  a_mt_mean  a_mt_sem
+0        640.0     0.00    400.00  ...      0.00     160.00      0.00
+1000     378.9   108.39    270.41  ...     42.04      72.16     30.11
+
+[2 rows x 17 columns]
+
+
+ ----- 
+
