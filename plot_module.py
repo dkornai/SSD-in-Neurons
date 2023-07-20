@@ -138,8 +138,8 @@ def plot_sde_results(
     total_het = total_mt/(total_mt+total_wt)
     total_het_mean = np.nanmean(total_het, axis = 0)
     total_het_sem = np.nanstd(total_het, axis = 0)/np.sqrt(n_samples)
-    total_het_lb = total_het_mean - total_het_sem
-    total_het_ub = total_het_mean + total_het_sem
+    total_het_lb = total_het_mean - (2*total_het_sem)
+    total_het_ub = total_het_mean + (2*total_het_sem)
 
     # Flatten the results and create a corresponding time array
     #times = np.repeat(time_points, total_het.shape[0])
@@ -162,8 +162,8 @@ def plot_sde_results(
     total_pop = np.sum(replicate_results, axis = 1)
     total_pop_mean = np.nanmean(total_pop, axis = 0)
     total_pop_sem = np.nanstd(total_pop, axis=0)/np.sqrt(n_samples)
-    total_pop_lb = total_pop_mean-total_pop_sem
-    total_pop_ub = total_pop_mean+total_pop_sem
+    total_pop_lb = total_pop_mean-(2*total_pop_sem)
+    total_pop_ub = total_pop_mean+(2*total_pop_sem)
     
 
     # Flatten the results and create a corresponding time array
@@ -199,7 +199,56 @@ def plot_sde_results(
     
     print("delta:", round(het_final-het_start, 4))
 
+def plot_twocomponent_results(stats_df):
+    t = stats_df['t'].to_numpy()
+    fig, axs = plt.subplots(2, 2, figsize=(15, 8))
+    
+    ## plot absolute population sizes
+    for mean_key, sem_key, line_label in zip(
+            ['s_wt_mean', 's_mt_mean', 'a_wt_mean', 'a_mt_mean'],
+            ['s_wt_sem', 's_mt_sem', 'a_wt_sem', 'a_mt_sem'],
+            ['soma wt mean', 'soma mt mean', 'axon wt mean', 'axon_mt_mean']
+        ):
 
+        mean = stats_df[mean_key].to_numpy()
+        sem = stats_df[sem_key].to_numpy()
+        axs[0, 0].plot(t, mean, label = line_label)
+        axs[0, 0].fill_between(t, mean - (2*sem), mean + (2*sem), alpha=0.1)
+
+    axs[0, 0].legend()
+    axs[0, 0].set_title('SDE: mean wt and mt counts in soma and axon')
+
+
+    ## plot effective population sizes over time
+    eps_mean = stats_df['eps_mean'].to_numpy()
+    eps_sem = stats_df['eps_sem'].to_numpy()
+    axs[1, 0].plot(t, eps_mean, label = f'mean eff. pop. size') 
+    axs[1, 0].fill_between(t, eps_mean-(2*eps_sem), eps_mean+(2*eps_sem), color='blue', alpha=0.2)
+    axs[1, 0].legend()
+    axs[1, 0].set_title('SDE: eff. pop. size over time')
+
+
+    ## plot heteroplasmy levels over time
+    het_mean = stats_df['het_mean'].to_numpy()
+    het_sem = stats_df['het_sem'].to_numpy()
+    axs[0, 1].plot(t, het_mean, label = f'mean heteroplasmy') 
+    axs[0, 1].fill_between(t, het_mean-(2*het_sem), het_mean+(2*het_sem), color='blue', alpha=0.2)
+    axs[0, 1].axhline(y = het_mean[0], alpha=0.2)
+    axs[0, 1].set_ylim([0, 1])
+    axs[0, 1].legend()
+    axs[0, 1].set_title('SDE: mean heteroplasmy over time')
+
+
+    ## plot total population size
+    pop_mean = stats_df['ps_mean'].to_numpy()
+    pop_sem = stats_df['ps_sem'].to_numpy()
+    axs[1, 1].plot(t, pop_mean, label = f'mean total pop. size') 
+    axs[1, 1].fill_between(t, pop_mean-(2*pop_sem), pop_mean+(2*pop_sem), color='blue', alpha=0.2)
+    axs[1, 1].legend()
+    axs[1, 1].set_title('SDE: total population over time')
+
+
+    plt.show()
 
 # plotting the network 
 plot_col_dict = {0:'lightblue', 1:'lightgreen', 2:'orange'}
