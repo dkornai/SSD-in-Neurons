@@ -26,11 +26,11 @@ START_STATE = start_state_from_nodes(G, heteroplasmy=0.5, delta=DELTA)
 TIME_POINTS = np.linspace(0, 4000, 1001)
 
 # number of replicates
-REP = 100
+REP = 10000
 
 # get the parameter values for which the simulations will be run
-C_B_val = sequence = [round(i * 10**-decimals, 14) for decimals in range(1, 13) for i in range(10, 0, -1)]
-C_B_val = [element for i, element in enumerate(C_B_val) if i % 10 == 0] # sparseify for testing
+C_B_val = sequence = [round(i * 10**-decimals, 14) for decimals in range(2, 13) for i in range(10, 0, -1)]
+#C_B_val = [element for i, element in enumerate(C_B_val) if i % 10 == 0] # sparseify for testing
 print("preparing to simulate with the following parameters:")
 print(C_B_val, '\n')
 
