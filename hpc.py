@@ -55,7 +55,7 @@ for i, c_b in enumerate(C_B_val):
     SDE_PARAM = sde_param_from_network(G, prnt=False)
 
     # run the gillespie simulation
-    gillespie_results = simulate_gillespie(SDE_PARAM, TIME_POINTS, START_STATE, replicates=REP)
+    gillespie_results = simulate_gillespie(SDE_PARAM, TIME_POINTS, START_STATE, replicates=REP, n_cpu=190)
     
     df_g, stats_g = two_component_statistics(gillespie_results, TIME_POINTS, DELTA)
     df_g.to_csv(f'hpc/model_1/paramdf_{i}_gillespie.csv')
@@ -69,7 +69,7 @@ for i, c_b in enumerate(C_B_val):
     
     
     # run the tau leaping simulation
-    tauleaping_results = simulate_tauleaping(SDE_PARAM, TIME_POINTS, START_STATE, replicates=REP, timestep=0.005)
+    tauleaping_results = simulate_tauleaping(SDE_PARAM, TIME_POINTS, START_STATE, replicates=REP, timestep=0.005, n_cpu=190)
     
     df_t, stats_t = two_component_statistics(tauleaping_results, TIME_POINTS, DELTA)
     df_t.to_csv(f'hpc/model_1/paramdf_{i}_gillespie.csv')

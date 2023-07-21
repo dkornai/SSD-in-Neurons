@@ -5,6 +5,7 @@ THIS MODULE CONTAINS FUNCTIONS TO SIMULATE THE NETWORK OF REACTIONS
 from typing import Callable
 import numpy as np; np.set_printoptions(suppress=True)
 from multiprocessing.pool import Pool
+from multiprocessing import cpu_count
 from tqdm import tqdm
 
 import scipy.integrate as integrate
@@ -66,6 +67,7 @@ def simulate_gillespie(
         time_points:    np.ndarray,
         start_state:    list,
         replicates:     int = 100,
+        n_cpu:          int = 0,
         ) ->            np.ndarray:
 
     # create array for output
@@ -82,7 +84,9 @@ def simulate_gillespie(
     print('simulating using gillespie...')
     pbar = tqdm(total=replicates)
 
-    with Pool() as pool:
+    if n_cpu == 0:
+        n_cpu = cpu_count()
+    with Pool(n_cpu) as pool:
         # prepare arguments as list of tuples
         param = [(time_points, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates) for _ in range(replicates)]
         
@@ -139,6 +143,7 @@ def simulate_tauleaping(
         start_state:    list,
         replicates:     int = 100,
         timestep:       float = 0.01,
+        n_cpu:          int = 0,
         ) ->            np.ndarray:
 
     # create array for output
@@ -155,7 +160,9 @@ def simulate_tauleaping(
     print('simulating using tau leaping...')
     pbar = tqdm(total=replicates)
 
-    with Pool() as pool:
+    if n_cpu == 0:
+        n_cpu = cpu_count()
+    with Pool(n_cpu) as pool:
         # prepare arguments as list of tuples
         param = [(time_points, timestep, start_state, reactions, react_rates, state_index, birth_update_par, n_birth_updates) for _ in range(replicates)]
         

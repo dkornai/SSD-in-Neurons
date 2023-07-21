@@ -1,7 +1,7 @@
 #!/bin/sh
 #PBS -N ssd_sim_test
-#PBS -l walltime=00:15:00
-#PBS -l select=1:ncpus=96:mem=256gb
+#PBS -l walltime=12:00:00
+#PBS -l select=1:ncpus=192:mem=512gb
 
 cd /rds/general/user/dkornai/home/Projects/SSD-in-Neurons
 
