@@ -10,13 +10,17 @@ from analyse_simulation import two_component_statistics
 
 from simulate import simulate_ode, simulate_gillespie, simulate_tauleaping
 
+# load in the specific model type
+MODEL = 'model_0'
 
 # load graph with attributes
-G = load_pickled_neuron_graph('neuron_graphs/2_compartment_model.pkl')
+G = load_pickled_neuron_graph(f'neuron_graphs/{MODEL}.pkl')
 
 # set delta to desired value
 DELTA = 0.25
-G.nodes()['S0B']['delta'] = DELTA
+for node, data in G.nodes(data = True):
+    if data['nodetype'] == 1:
+        data['delta'] = DELTA
 
 # get node names and start state
 VARS, NODES = names_from_network(G)
@@ -31,7 +35,7 @@ REP = 10000
 # get the parameter values for which the simulations will be run
 C_B_val = sequence = [round(i * 10**-decimals, 14) for decimals in range(2, 13) for i in range(10, 0, -1)]
 #C_B_val = [element for i, element in enumerate(C_B_val) if i % 10 == 0] # sparseify for testing
-print("preparing to simulate with the following parameters:")
+print(f"preparing to simulate {MODEL} with the following parameters:")
 print(C_B_val, '\n')
 
 
@@ -42,7 +46,10 @@ stats_df = pd.DataFrame()
 for i, c_b in enumerate(C_B_val):
     print(f"\n<<<< STARTING SIMULATION {i} WITH C_B = {c_b} >>>>\n")
     
-    G.nodes()['S0B']['c_b'] = c_b
+    # set c_b value
+    for node, data in G.nodes(data = True):
+        if data['nodetype'] == 1:
+            data['c_b'] = c_b
 
 #     # infer the ode model
 #     ode_model = ode_from_network(G, prnt=True)
@@ -58,11 +65,9 @@ for i, c_b in enumerate(C_B_val):
     gillespie_results = simulate_gillespie(SDE_PARAM, TIME_POINTS, START_STATE, replicates=REP, n_cpu=190)
     
     df_g, stats_g = two_component_statistics(gillespie_results, TIME_POINTS, DELTA)
-    df_g.to_csv(f'hpc/model_1/paramdf_{i}_gillespie.csv')
+    df_g.to_csv(f'sim_out/{MODEL}/paramdf_{i}_gillespie.csv')
 
-    stats_g['simtype'] = 'g'
-    stats_g['cb'] = c_b
-    stats_g['i'] = i
+    stats_g['simtype'] = 'g'; stats_g['cb'] = c_b; stats_g['i'] = i
     stats_df = stats_df.append(pd.Series(stats_g), ignore_index=True)
     
     print(df_g.iloc[[0, -1]]);print()
@@ -72,11 +77,9 @@ for i, c_b in enumerate(C_B_val):
     tauleaping_results = simulate_tauleaping(SDE_PARAM, TIME_POINTS, START_STATE, replicates=REP, timestep=0.005, n_cpu=190)
     
     df_t, stats_t = two_component_statistics(tauleaping_results, TIME_POINTS, DELTA)
-    df_t.to_csv(f'hpc/model_1/paramdf_{i}_gillespie.csv')
+    df_t.to_csv(f'sim_out/{MODEL}/paramdf_{i}_tauleaping.csv')
 
-    stats_t['simtype'] = 't'
-    stats_t['cb'] = c_b
-    stats_t['i'] = i
+    stats_t['simtype'] = 't'; stats_t['cb'] = c_b; stats_t['i'] = i
     stats_df = stats_df.append(pd.Series(stats_t), ignore_index=True)
     
     print(df_t.iloc[[0, -1]]);print()
@@ -85,4 +88,4 @@ for i, c_b in enumerate(C_B_val):
     
 # print and write collected stats
 print(stats_df)
-stats_df.to_csv("hpc/model_1/statsdf.csv")
+stats_df.to_csv(f"sim_out/{MODEL}/statsdf.csv")
