@@ -10,13 +10,15 @@ from analyse_simulation import two_component_statistics
 
 from simulate import simulate_ode, simulate_gillespie, simulate_tauleaping
 
+# amount of time to run simulation for 
+T = 30000
+
 
 DELTA_VALUES = [0.25, 0.4,  0.5,  0.68, 0.75]
 DELTA_NAMES =  ['D25','D40','D50','D68','D75']
 MODEL_NAMES = ['model_0', 'model_1']
 
-
-
+# iterate through 
 for DELTA, DELTA_NAME in zip(DELTA_VALUES, DELTA_NAMES):
     for MODEL in MODEL_NAMES:
         print(f"\n**** preparing to simulate {MODEL} with delta = {DELTA} ****")
@@ -37,7 +39,7 @@ for DELTA, DELTA_NAME in zip(DELTA_VALUES, DELTA_NAMES):
         START_STATE = start_state_from_nodes(G, heteroplasmy=0.5, delta=DELTA)
 
         # set the timesteps for the simulation
-        TIME_POINTS = np.linspace(0, 4000, 1001)
+        TIME_POINTS = np.linspace(0, T, 1001)
 
         # number of replicates
         REP = 10000
@@ -65,7 +67,7 @@ for DELTA, DELTA_NAME in zip(DELTA_VALUES, DELTA_NAMES):
             SDE_PARAM = sde_param_from_network(G, prnt=False)
 
             # run the gillespie simulation
-            gillespie_results = simulate_gillespie(SDE_PARAM, TIME_POINTS, START_STATE, replicates=REP, n_cpu=190)
+            gillespie_results = simulate_gillespie(SDE_PARAM, TIME_POINTS, START_STATE, replicates=REP, n_cpu=254)
             
             df_g, stats_g = two_component_statistics(gillespie_results, TIME_POINTS, DELTA)
             df_g.to_csv(f'sim_out/{MODEL}/{DELTA_NAME}/paramdf_{i}_gillespie.csv')
@@ -77,7 +79,7 @@ for DELTA, DELTA_NAME in zip(DELTA_VALUES, DELTA_NAMES):
             
             
             # run the tau leaping simulation
-            tauleaping_results = simulate_tauleaping(SDE_PARAM, TIME_POINTS, START_STATE, replicates=REP, timestep=0.005, n_cpu=190)
+            tauleaping_results = simulate_tauleaping(SDE_PARAM, TIME_POINTS, START_STATE, replicates=REP, timestep=0.005, n_cpu=254)
             
             df_t, stats_t = two_component_statistics(tauleaping_results, TIME_POINTS, DELTA)
             df_t.to_csv(f'sim_out/{MODEL}/{DELTA_NAME}/paramdf_{i}_tauleaping.csv')
