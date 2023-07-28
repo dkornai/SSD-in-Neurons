@@ -1,5 +1,6 @@
 import argparse
 import os
+import pickle
 
 import numpy as np; np.set_printoptions(suppress=True, linewidth=180); np.seterr(divide='ignore')
 import pandas as pd; pd.set_option('display.width', 500)
@@ -96,6 +97,11 @@ def cb_scan(model, delta, replicates, time):
     # print and write collected stats
     print(stats_df)
     stats_df.to_csv(f"sim_out/{model}/{delta_folders[delta]}/statsdf.csv")
+
+
+    print(f"Wrote full simulation state to a .pkl file")
+    with open(f'sim_out/{model}/{delta_folders[delta]}/gillespie_results.pkl', 'wb') as f:
+        pickle.dump(gillespie_results, f)
 
 
 
