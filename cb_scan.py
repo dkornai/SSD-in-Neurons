@@ -71,13 +71,17 @@ def cb_scan(model, delta, replicates, time):
         
         df_g, stats_g = two_component_statistics(gillespie_results, TIME_POINTS, delta)
         df_g.to_csv(f'sim_out/{model}/{delta_folders[delta]}/paramdf_{i}_gillespie.csv')
+        print(df_g.iloc[[0, -1]]);print()
 
+        print('Tests:')
         stats_g['simtype'] = 'g'; stats_g['cb'] = c_b; stats_g['i'] = i
         stats_df = stats_df.append(pd.Series(stats_g), ignore_index=True)
         
-        print(df_g.iloc[[0, -1]]);print()
-
+        print(f"Wrote full simulation state to a .pkl file")
+        with open(f'sim_out/{model}/{delta_folders[delta]}/gillespie_results_{i}.pkl', 'wb') as f:
+            pickle.dump(gillespie_results, f)
         
+
         # run the tau leaping simulation
         tauleaping_results = simulate_tauleaping(
             SDE_PARAM, TIME_POINTS, START_STATE, timestep=0.005,
@@ -86,12 +90,18 @@ def cb_scan(model, delta, replicates, time):
         
         df_t, stats_t = two_component_statistics(tauleaping_results, TIME_POINTS, delta)
         df_t.to_csv(f'sim_out/{model}/{delta_folders[delta]}/paramdf_{i}_tauleaping.csv')
+        print(df_t.iloc[[0, -1]]);print()
 
+        print('Tests:')
         stats_t['simtype'] = 't'; stats_t['cb'] = c_b; stats_t['i'] = i
         stats_df = stats_df.append(pd.Series(stats_t), ignore_index=True)
+                
+        print(f"Wrote full simulation state to a .pkl file")
+        with open(f'sim_out/{model}/{delta_folders[delta]}/tauleaping_results_{i}.pkl', 'wb') as f:
+            pickle.dump(tauleaping_results, f)
+
         
-        print(df_t.iloc[[0, -1]]);print()
-        
+
         print("\n ----- \n")
         
     # print and write collected stats
@@ -99,9 +109,7 @@ def cb_scan(model, delta, replicates, time):
     stats_df.to_csv(f"sim_out/{model}/{delta_folders[delta]}/statsdf.csv")
 
 
-    print(f"Wrote full simulation state to a .pkl file")
-    with open(f'sim_out/{model}/{delta_folders[delta]}/gillespie_results.pkl', 'wb') as f:
-        pickle.dump(gillespie_results, f)
+    
 
 
 
