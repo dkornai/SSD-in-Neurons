@@ -7,7 +7,6 @@ import pandas as pd; pd.set_option('display.width', 500)
 
 from sim_param_from_network import sde_param_from_network, start_state_from_nodes
 from neuron_graph_helper import load_pickled_neuron_graph
-from analyse_simulation import two_component_statistics
 from simulate import simulate_gillespie, simulate_tauleaping
 
 
@@ -47,9 +46,6 @@ def cb_scan(model, delta, replicates, time):
     # set the timesteps for the simulation
     TIME_POINTS = np.linspace(0, time, 1001)
     
-    # create dataframe for storeing results
-    stats_df = pd.DataFrame()
-
     # perform parameter scan
     for i, c_b in enumerate(C_VALS):
         print(f"\n<<<< STARTING SIMULATION {i} WITH C_B = {c_b} >>>>\n")
@@ -68,15 +64,7 @@ def cb_scan(model, delta, replicates, time):
             SDE_PARAM, TIME_POINTS, START_STATE, 
             replicates=replicates, n_cpu=254
             )
-        
-        df_g, stats_g = two_component_statistics(gillespie_results, TIME_POINTS, delta)
-        df_g.to_csv(f'sim_out/{model}/{delta_folders[delta]}/paramdf_{i}_gillespie.csv')
-        print(df_g.iloc[[0, -1]]);print()
-
-        print('Tests:')
-        stats_g['simtype'] = 'g'; stats_g['cb'] = c_b; stats_g['i'] = i
-        stats_df = stats_df.append(pd.Series(stats_g), ignore_index=True)
-        
+        # export the results
         print(f"Wrote full simulation state to a .pkl file")
         with open(f'sim_out/{model}/{delta_folders[delta]}/gillespie_results_{i}.pkl', 'wb') as f:
             pickle.dump(gillespie_results, f)
@@ -87,15 +75,7 @@ def cb_scan(model, delta, replicates, time):
             SDE_PARAM, TIME_POINTS, START_STATE, timestep=0.005,
             replicates=replicates, n_cpu=254
             )
-        
-        df_t, stats_t = two_component_statistics(tauleaping_results, TIME_POINTS, delta)
-        df_t.to_csv(f'sim_out/{model}/{delta_folders[delta]}/paramdf_{i}_tauleaping.csv')
-        print(df_t.iloc[[0, -1]]);print()
-
-        print('Tests:')
-        stats_t['simtype'] = 't'; stats_t['cb'] = c_b; stats_t['i'] = i
-        stats_df = stats_df.append(pd.Series(stats_t), ignore_index=True)
-                
+        # export the results
         print(f"Wrote full simulation state to a .pkl file")
         with open(f'sim_out/{model}/{delta_folders[delta]}/tauleaping_results_{i}.pkl', 'wb') as f:
             pickle.dump(tauleaping_results, f)
@@ -103,13 +83,6 @@ def cb_scan(model, delta, replicates, time):
         
 
         print("\n ----- \n")
-        
-    # print and write collected stats
-    print(stats_df)
-    stats_df.to_csv(f"sim_out/{model}/{delta_folders[delta]}/statsdf.csv")
-
-
-    
 
 
 
@@ -126,11 +99,3 @@ if __name__ == '__main__':  # parse command line arguments
     ensure_dir(f'sim_out/{args.model}/{delta_folders[args.delta]}/')
 
     cb_scan(args.model, args.delta, args.replicates, args.time)
-
-
-
-# # amount of time to run simulation for 
-# T = 30000
-# DELTA_VALUES = [0.25, 0.4,  0.5,  0.68, 0.75]
-# MODEL_NAMES = ['model_0', 'model_1']
-
