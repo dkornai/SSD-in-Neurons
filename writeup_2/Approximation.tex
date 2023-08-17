@@ -1,0 +1,58 @@
+\documentclass[]{article}
+\usepackage{geometry}
+\geometry{a4paper, top=25mm, bottom=25mm, left=25mm, right=25mm}
+
+%opening
+\title{}
+\author{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+\section{Ornstein-Uhlenbeck approximation}
+
+\subsection{Introduction}
+
+The changes in copy number of the system over time can be approximated as an Ornstein-Uhlenbeck process occurring in a given potential energy landscape. The change in copy number ($P$) is given by:
+
+\begin{equation} \label{eq:o_u} 
+	dP(t) = -\alpha \nabla U(P(t))dt + \sqrt{2 D} dW(t)
+\end{equation} 
+
+The gradient of the potential energy is defined for a given $P$ according to the expected change in $P$ due to the combined effects of actively controlled births, and deaths occurring with a constant rate:
+
+\begin{equation} \label{eq:gradient} 
+	\nabla U(P(t))dt = - P(max[0, Birth + C_b (NSS-P)] - Death)dt
+\end{equation} 
+
+Thus the full equation takes the form:
+
+\begin{equation} \label{eq:o_u_full} 
+	dP(t) = \alpha \times P(max[0, Birth + C_b (NSS-P)] - Death)dt + \sqrt{2 D} dW(t)
+\end{equation} 
+
+\subsection{Parameter estimation}
+
+As the $Birth$, $Death$, $NSS$, and $C_b$ parameters are predetermined, simulating with the model requires the inference of the $D$ and $\alpha$ parameters. 
+
+\subsubsection{Estimating D}
+The estimation of $D$ is relatively straightforward. The Gillespie algorithm can be use to simulate a high number of replicates of the system with $C_b = 0$. With $C_b = 0$, copy numbers are no longer stabilized, and $P$ reverts to a simpler Brownian motion. For such 1-dimensional Brownian motion, the variance at time t is given by: 
+
+\begin{equation} \label{eq:D} 
+	Var(P(t)) = 2Dt
+\end{equation} 
+Therefore D can be estimated from the data observed during the Gillespie simulations as the best linear fit (with intercept 0) to the observed variance over time. 
+\begin{equation} \label{eq:D_fit} 
+	2D = \frac{\sum_{i} t_i \times \hat{Var(P(t))_i}}{\sum_{i} t_i^2}
+\end{equation} 
+
+\subsubsection{Estimating $\alpha$}
+???
+
+
+\end{document}
