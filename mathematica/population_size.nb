@@ -1,0 +1,863 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 13.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     30948,        853]
+NotebookOptionsPosition[     29033,        816]
+NotebookOutlinePosition[     29434,        832]
+CellTagsIndexPosition[     29391,        829]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"Clear", "[", 
+    RowBox[{"kb", ",", "kd", ",", "Cb", ",", "NSS", ",", "n", ",", "dt"}], 
+    "]"}], ";"}], "\[IndentingNewLine]"}], "\n", 
+ RowBox[{
+  RowBox[{"kb", "=", "kb"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"kd", "=", "kd"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"Cb", "=", "Cb"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"NSS", "=", "NSS"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"n", "=", "n"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"dt", "=", "dt"}], ";"}], "\[IndentingNewLine]"}], "\n", 
+ RowBox[{"Assuming", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"kb", ">", "0"}], ",", 
+     RowBox[{"Cb", ">", "0"}], ",", 
+     RowBox[{"n", ">", "0"}], ",", " ", 
+     RowBox[{"kd", " ", "=", " ", "kb"}]}], "}"}], ",", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{"Define", " ", "the", " ", "function", " ", "for", " ", "f", 
+     RowBox[{"(", "n", ")"}], "dt"}], "*)"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"fndt", "=", 
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"Max", "[", 
+          RowBox[{"0", ",", 
+           RowBox[{"kb", "+", 
+            RowBox[{"Cb", "*", 
+             RowBox[{"(", 
+              RowBox[{"NSS", "-", "n"}], ")"}]}]}]}], "]"}], "*", "n"}], "-", 
+        
+        RowBox[{"kd", "*", "n"}]}], ")"}], "*", "dt"}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{"\"\<f(n)dt = \>\"", ",", "fndt"}], "]"}], ";", 
+    "\[IndentingNewLine]", "\[IndentingNewLine]", 
+    RowBox[{"(*", 
+     RowBox[{
+     "Calculate", " ", "the", " ", "variances", " ", "for", " ", "birth", " ",
+       "and", " ", "death", " ", "events", " ", "separately"}], "*)"}], 
+    "\[IndentingNewLine]", 
+    RowBox[{"varBirth", "=", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"1", "-", "fndt"}], ")"}], "^", "2"}], "*", 
+      RowBox[{"Max", "[", 
+       RowBox[{"0", ",", 
+        RowBox[{"kb", "+", 
+         RowBox[{"Cb", "*", 
+          RowBox[{"(", 
+           RowBox[{"NSS", "-", "n"}], ")"}]}]}]}], "]"}], "*", "n", "*", 
+      "dt"}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{"\"\<Variance of Birth = \>\"", ",", "varBirth"}], "]"}], ";", 
+    "\[IndentingNewLine]", "\[IndentingNewLine]", 
+    RowBox[{"varDeath", "=", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"1", "+", "fndt"}], ")"}], "^", "2"}], "*", "kd", "*", "n", 
+      "*", "dt"}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{"\"\<Variance of Death = \>\"", ",", "varDeath"}], "]"}], ";", 
+    "\[IndentingNewLine]", "\[IndentingNewLine]", 
+    RowBox[{"(*", 
+     RowBox[{"Total", " ", "variance"}], "*)"}], 
+    RowBox[{"totalVar", "=", 
+     RowBox[{"varBirth", "+", "varDeath"}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{"\"\<Total variance = \>\"", ",", "totalVar"}], "]"}], ";", 
+    "\[IndentingNewLine]", "\[IndentingNewLine]", 
+    RowBox[{"(*", 
+     RowBox[{"Expanded", " ", "form"}], "*)"}], "\[IndentingNewLine]", 
+    RowBox[{"expandedTotalVar", "=", 
+     RowBox[{"Expand", "[", "totalVar", "]"}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{"\"\<Expanded Total Variance = \>\"", ",", "expandedTotalVar"}], 
+     "]"}], ";", "\[IndentingNewLine]", "\[IndentingNewLine]", 
+    RowBox[{"(*", 
+     RowBox[{"Collect", " ", "coefficients", " ", 
+      RowBox[{"w", ".", "r", ".", "t", ".", "dt"}], " ", "and", " ", 
+      "neglect", " ", "higher", " ", "orders"}], "*)"}], 
+    "\[IndentingNewLine]", 
+    RowBox[{"coeff0", "=", 
+     RowBox[{"Coefficient", "[", 
+      RowBox[{"expandedTotalVar", ",", "dt", ",", "0"}], "]"}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"coeff1", "=", 
+     RowBox[{"Coefficient", "[", 
+      RowBox[{"expandedTotalVar", ",", "dt", ",", "1"}], "]"}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"approxTotalVar", "=", 
+     RowBox[{"coeff0", "+", 
+      RowBox[{"coeff1", "*", "dt"}]}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{
+     "\"\<Approximated Total Variance = \>\"", ",", "approxTotalVar"}], "]"}],
+     ";", "\[IndentingNewLine]", "\[IndentingNewLine]", 
+    RowBox[{"deathterm", " ", "=", " ", 
+     RowBox[{"kd", "*", "n", "*", "dt"}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"birthterm", " ", "=", " ", 
+     RowBox[{
+      RowBox[{"Max", "[", 
+       RowBox[{"0", ",", 
+        RowBox[{"kb", "+", 
+         RowBox[{"Cb", "*", 
+          RowBox[{"(", 
+           RowBox[{"NSS", "-", "n"}], ")"}]}]}]}], "]"}], "*", "n", "*", 
+      "dt"}]}], ";", "\[IndentingNewLine]", "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{"deathterm", "^", "2"}], "]"}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{"birthterm", "^", "2"}], "]"}]}]}], "\[IndentingNewLine]", 
+  "\[IndentingNewLine]", "]"}]}], "Input",
+ CellChangeTimes->{{3.9013414940026007`*^9, 3.901341510410578*^9}, {
+  3.901341555931971*^9, 3.901341571524063*^9}, {3.901341606635315*^9, 
+  3.901341664992579*^9}, {3.9013417998559427`*^9, 3.901341833148827*^9}, {
+  3.901341902580017*^9, 3.901341908027399*^9}, {3.901342120241499*^9, 
+  3.90134212034067*^9}, {3.901342220325553*^9, 3.9013422326102858`*^9}, {
+  3.9013426246451674`*^9, 3.901342640441654*^9}, {3.901343025818123*^9, 
+  3.901343106088183*^9}, {3.901343681148546*^9, 3.901343810099687*^9}},
+ CellLabel->
+  "In[240]:=",ExpressionUUID->"f9809854-cac6-4db2-a791-a173d33500cf"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"f(n)dt = \"\>", "\[InvisibleSpace]", 
+   RowBox[{"dt", " ", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"-", "kb"}], " ", "n"}], "+", 
+      RowBox[{"n", " ", 
+       RowBox[{"Max", "[", 
+        RowBox[{"0", ",", 
+         RowBox[{"kb", "+", 
+          RowBox[{"Cb", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}]}], 
+     ")"}]}]}],
+  SequenceForm[
+  "f(n)dt = ", $CellContext`dt (-$CellContext`kb $CellContext`n + \
+$CellContext`n 
+     Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)])],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901342641510797*^9, 3.90134377865099*^9, 
+  3.901343811297607*^9},
+ CellLabel->
+  "During evaluation of \
+In[240]:=",ExpressionUUID->"e956b7ce-12af-4a32-b7f8-d19ccee1989e"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Variance of Birth = \"\>", "\[InvisibleSpace]", 
+   RowBox[{"dt", " ", "n", " ", 
+    RowBox[{"Max", "[", 
+     RowBox[{"0", ",", 
+      RowBox[{"kb", "+", 
+       RowBox[{"Cb", " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}], " ", 
+    SuperscriptBox[
+     RowBox[{"(", 
+      RowBox[{"1", "-", 
+       RowBox[{"dt", " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"-", "kb"}], " ", "n"}], "+", 
+          RowBox[{"n", " ", 
+           RowBox[{"Max", "[", 
+            RowBox[{"0", ",", 
+             RowBox[{"kb", "+", 
+              RowBox[{"Cb", " ", 
+               RowBox[{"(", 
+                RowBox[{
+                 RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}]}], 
+         ")"}]}]}], ")"}], "2"]}]}],
+  SequenceForm[
+  "Variance of Birth = ", $CellContext`dt $CellContext`n 
+   Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)] (
+     1 - $CellContext`dt (-$CellContext`kb $CellContext`n + $CellContext`n 
+       Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)]))^2],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901342641510797*^9, 3.90134377865099*^9, 
+  3.901343811300296*^9},
+ CellLabel->
+  "During evaluation of \
+In[240]:=",ExpressionUUID->"c1bdd42f-5988-4796-b229-2ea7091cfb65"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Variance of Death = \"\>", "\[InvisibleSpace]", 
+   RowBox[{"dt", " ", "kb", " ", "n", " ", 
+    SuperscriptBox[
+     RowBox[{"(", 
+      RowBox[{"1", "+", 
+       RowBox[{"dt", " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"-", "kb"}], " ", "n"}], "+", 
+          RowBox[{"n", " ", 
+           RowBox[{"Max", "[", 
+            RowBox[{"0", ",", 
+             RowBox[{"kb", "+", 
+              RowBox[{"Cb", " ", 
+               RowBox[{"(", 
+                RowBox[{
+                 RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}]}], 
+         ")"}]}]}], ")"}], "2"]}]}],
+  SequenceForm[
+  "Variance of Death = ", $CellContext`dt $CellContext`kb $CellContext`n (
+     1 + $CellContext`dt (-$CellContext`kb $CellContext`n + $CellContext`n 
+        Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)]))^2],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901342641510797*^9, 3.90134377865099*^9, 
+  3.901343811303096*^9},
+ CellLabel->
+  "During evaluation of \
+In[240]:=",ExpressionUUID->"9d4c72d2-cf2b-40b6-9785-57676b3954bd"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total variance = \"\>", "\[InvisibleSpace]", 
+   RowBox[{
+    RowBox[{"dt", " ", "n", " ", 
+     RowBox[{"Max", "[", 
+      RowBox[{"0", ",", 
+       RowBox[{"kb", "+", 
+        RowBox[{"Cb", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}], " ", 
+     SuperscriptBox[
+      RowBox[{"(", 
+       RowBox[{"1", "-", 
+        RowBox[{"dt", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"-", "kb"}], " ", "n"}], "+", 
+           RowBox[{"n", " ", 
+            RowBox[{"Max", "[", 
+             RowBox[{"0", ",", 
+              RowBox[{"kb", "+", 
+               RowBox[{"Cb", " ", 
+                RowBox[{"(", 
+                 RowBox[{
+                  RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}]}], 
+          ")"}]}]}], ")"}], "2"]}], "+", 
+    RowBox[{"dt", " ", "kb", " ", "n", " ", 
+     SuperscriptBox[
+      RowBox[{"(", 
+       RowBox[{"1", "+", 
+        RowBox[{"dt", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"-", "kb"}], " ", "n"}], "+", 
+           RowBox[{"n", " ", 
+            RowBox[{"Max", "[", 
+             RowBox[{"0", ",", 
+              RowBox[{"kb", "+", 
+               RowBox[{"Cb", " ", 
+                RowBox[{"(", 
+                 RowBox[{
+                  RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}]}], 
+          ")"}]}]}], ")"}], "2"]}]}]}],
+  SequenceForm[
+  "Total variance = ", $CellContext`dt $CellContext`n 
+    Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)] (
+      1 - $CellContext`dt (-$CellContext`kb $CellContext`n + $CellContext`n 
+        Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)]))^2 + $CellContext`dt $CellContext`kb $CellContext`n (
+      1 + $CellContext`dt (-$CellContext`kb $CellContext`n + $CellContext`n 
+         Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)]))^2],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901342641510797*^9, 3.90134377865099*^9, 
+  3.9013438113055058`*^9},
+ CellLabel->
+  "During evaluation of \
+In[240]:=",ExpressionUUID->"d252c57f-b1c2-444f-8fb3-940f6039a98d"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Expanded Total Variance = \"\>", "\[InvisibleSpace]", 
+   RowBox[{
+    RowBox[{"dt", " ", "kb", " ", "n"}], "-", 
+    RowBox[{"2", " ", 
+     SuperscriptBox["dt", "2"], " ", 
+     SuperscriptBox["kb", "2"], " ", 
+     SuperscriptBox["n", "2"]}], "+", 
+    RowBox[{
+     SuperscriptBox["dt", "3"], " ", 
+     SuperscriptBox["kb", "3"], " ", 
+     SuperscriptBox["n", "3"]}], "+", 
+    RowBox[{"dt", " ", "n", " ", 
+     RowBox[{"Max", "[", 
+      RowBox[{"0", ",", 
+       RowBox[{"kb", "+", 
+        RowBox[{"Cb", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}], "+", 
+    RowBox[{"4", " ", 
+     SuperscriptBox["dt", "2"], " ", "kb", " ", 
+     SuperscriptBox["n", "2"], " ", 
+     RowBox[{"Max", "[", 
+      RowBox[{"0", ",", 
+       RowBox[{"kb", "+", 
+        RowBox[{"Cb", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}], "-", 
+    RowBox[{
+     SuperscriptBox["dt", "3"], " ", 
+     SuperscriptBox["kb", "2"], " ", 
+     SuperscriptBox["n", "3"], " ", 
+     RowBox[{"Max", "[", 
+      RowBox[{"0", ",", 
+       RowBox[{"kb", "+", 
+        RowBox[{"Cb", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}], "-", 
+    RowBox[{"2", " ", 
+     SuperscriptBox["dt", "2"], " ", 
+     SuperscriptBox["n", "2"], " ", 
+     SuperscriptBox[
+      RowBox[{"Max", "[", 
+       RowBox[{"0", ",", 
+        RowBox[{"kb", "+", 
+         RowBox[{"Cb", " ", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}], "2"]}], "-", 
+    RowBox[{
+     SuperscriptBox["dt", "3"], " ", "kb", " ", 
+     SuperscriptBox["n", "3"], " ", 
+     SuperscriptBox[
+      RowBox[{"Max", "[", 
+       RowBox[{"0", ",", 
+        RowBox[{"kb", "+", 
+         RowBox[{"Cb", " ", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}], "2"]}], "+", 
+    RowBox[{
+     SuperscriptBox["dt", "3"], " ", 
+     SuperscriptBox["n", "3"], " ", 
+     SuperscriptBox[
+      RowBox[{"Max", "[", 
+       RowBox[{"0", ",", 
+        RowBox[{"kb", "+", 
+         RowBox[{"Cb", " ", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}], "3"]}]}]}],
+  SequenceForm[
+  "Expanded Total Variance = ", $CellContext`dt $CellContext`kb \
+$CellContext`n - 
+   2 $CellContext`dt^2 $CellContext`kb^2 $CellContext`n^2 + $CellContext`dt^3 \
+$CellContext`kb^3 $CellContext`n^3 + $CellContext`dt $CellContext`n 
+    Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)] + 
+   4 $CellContext`dt^2 $CellContext`kb $CellContext`n^2 
+    Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)] - $CellContext`dt^3 $CellContext`kb^2 $CellContext`n^3 
+   Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)] - 2 $CellContext`dt^2 $CellContext`n^2 
+   Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)]^2 - $CellContext`dt^3 $CellContext`kb $CellContext`n^3 
+   Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)]^2 + $CellContext`dt^3 $CellContext`n^3 
+    Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)]^3],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901342641510797*^9, 3.90134377865099*^9, 
+  3.901343811307519*^9},
+ CellLabel->
+  "During evaluation of \
+In[240]:=",ExpressionUUID->"d42114b1-a5a6-4d29-b39f-828565bb2b0e"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Approximated Total Variance = \"\>", "\[InvisibleSpace]", 
+   RowBox[{"dt", " ", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"kb", " ", "n"}], "+", 
+      RowBox[{"n", " ", 
+       RowBox[{"Max", "[", 
+        RowBox[{"0", ",", 
+         RowBox[{"kb", "+", 
+          RowBox[{"Cb", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}]}], 
+     ")"}]}]}],
+  SequenceForm[
+  "Approximated Total Variance = ", $CellContext`dt ($CellContext`kb \
+$CellContext`n + $CellContext`n 
+     Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)])],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901342641510797*^9, 3.90134377865099*^9, 
+  3.90134381131043*^9},
+ CellLabel->
+  "During evaluation of \
+In[240]:=",ExpressionUUID->"0650f860-7bc6-4255-85fc-f1ee9419d909"],
+
+Cell[BoxData[
+ RowBox[{
+  SuperscriptBox["dt", "2"], " ", 
+  SuperscriptBox["kb", "2"], " ", 
+  SuperscriptBox["n", "2"]}]], "Print",
+ CellChangeTimes->{3.901342641510797*^9, 3.90134377865099*^9, 
+  3.901343811312438*^9},
+ CellLabel->
+  "During evaluation of \
+In[240]:=",ExpressionUUID->"67d0ca3d-82e3-4029-82bf-3fa3ff4ebf6e"],
+
+Cell[BoxData[
+ RowBox[{
+  SuperscriptBox["dt", "2"], " ", 
+  SuperscriptBox["n", "2"], " ", 
+  SuperscriptBox[
+   RowBox[{"Max", "[", 
+    RowBox[{"0", ",", 
+     RowBox[{"kb", "+", 
+      RowBox[{"Cb", " ", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}], 
+   "2"]}]], "Print",
+ CellChangeTimes->{3.901342641510797*^9, 3.90134377865099*^9, 
+  3.901343811313517*^9},
+ CellLabel->
+  "During evaluation of \
+In[240]:=",ExpressionUUID->"3c767601-b06e-4964-9ba8-3cf0feafafb6"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"Clear", "[", 
+    RowBox[{"kb", ",", "kd", ",", "Cb", ",", "NSS", ",", "n", ",", "dt"}], 
+    "]"}], ";"}], "\[IndentingNewLine]"}], "\n", 
+ RowBox[{
+  RowBox[{"kb", "=", "kb"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"kd", "=", "kd"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"Cb", "=", "Cb"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"NSS", "=", "NSS"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"n", "=", "n"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"dt", "=", "dt"}], ";"}], "\[IndentingNewLine]"}], "\n", 
+ RowBox[{"Assuming", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"kb", ">", "0"}], ",", 
+     RowBox[{"Cb", ">", "0"}], ",", 
+     RowBox[{"n", ">", "0"}], ",", " ", 
+     RowBox[{"kd", " ", "=", " ", "kb"}]}], "}"}], ",", "\[IndentingNewLine]", 
+   RowBox[{"(*", 
+    RowBox[{
+    "Define", " ", "the", " ", "expected", " ", "changes", " ", "due", " ", 
+     "to", " ", "births", " ", "and", " ", "deaths"}], "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"kbn", " ", "=", " ", 
+     RowBox[{
+      RowBox[{"Max", "[", 
+       RowBox[{"0", ",", 
+        RowBox[{"kb", "+", 
+         RowBox[{"Cb", "*", 
+          RowBox[{"(", 
+           RowBox[{"NSS", "-", "n"}], ")"}]}]}]}], "]"}], "*", "n"}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"kdn", " ", "=", " ", 
+     RowBox[{"kd", "*", "n"}]}], ";", "\[IndentingNewLine]", 
+    "\[IndentingNewLine]", 
+    RowBox[{"(*", 
+     RowBox[{
+      RowBox[{"Define", " ", "the", " ", "total", " ", "expected", " ", 
+       RowBox[{"(", "mean", ")"}], " ", "change"}], ",", " ", 
+      RowBox[{"and", " ", "its", " ", "square"}]}], "*)"}], 
+    "\[IndentingNewLine]", 
+    RowBox[{"expectedChange", "=", 
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{"kbn", "-", "kdn"}], ")"}], "*", "dt"}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{
+     "\"\<Expected change to n over time dt = \>\"", ",", "expectedChange"}], 
+     "]"}], ";", "\[IndentingNewLine]", 
+    RowBox[{"expectedChangeSqr", " ", "=", " ", 
+     RowBox[{"Expand", "[", 
+      RowBox[{"expectedChange", "^", "2"}], "]"}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{
+     "\"\<Squared expected change to n over time dt = \>\"", ",", 
+      "expectedChangeSqr"}], "]"}], ";", "\[IndentingNewLine]", 
+    "\[IndentingNewLine]", 
+    RowBox[{"(*", 
+     RowBox[{
+     "Define", " ", "the", " ", "expected", " ", "squared", " ", "change"}], 
+     "*)"}], "\[IndentingNewLine]", 
+    RowBox[{"sqrExpectedChange", " ", "=", " ", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"+", "1"}], ")"}], "^", "2"}], ")"}], "*", "kbn", "*", 
+       "dt"}], " ", "+", " ", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"-", "1"}], ")"}], "^", "2"}], ")"}], "*", "kdn", "*", 
+       "dt"}]}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{
+     "\"\<Expected squared change to n over time dt = \>\"", ",", 
+      "sqrExpectedChange"}], "]"}], ";", "\[IndentingNewLine]", 
+    "\[IndentingNewLine]", 
+    RowBox[{"(*", 
+     RowBox[{
+     "Therefore", " ", "the", " ", "Variance", " ", "can", " ", "be", " ", 
+      "defined", " ", "as"}], "*)"}], "\[IndentingNewLine]", 
+    RowBox[{"varN", "=", " ", 
+     RowBox[{"sqrExpectedChange", " ", "-", " ", "expectedChangeSqr"}]}], ";",
+     "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{"\"\<Variance of n = \>\"", ",", "varN"}], "]"}], ";", 
+    "\[IndentingNewLine]", "\[IndentingNewLine]", 
+    RowBox[{"(*", 
+     RowBox[{"Collect", " ", "coefficients", " ", 
+      RowBox[{"w", ".", "r", ".", "t", ".", "dt"}], " ", "and", " ", 
+      "neglect", " ", "higher", " ", "orders"}], "*)"}], 
+    "\[IndentingNewLine]", 
+    RowBox[{"coeff0", "=", 
+     RowBox[{"Coefficient", "[", 
+      RowBox[{"varN", ",", "dt", ",", "0"}], "]"}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"coeff1", "=", 
+     RowBox[{"Coefficient", "[", 
+      RowBox[{"varN", ",", "dt", ",", "1"}], "]"}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"approxTotalVar", "=", 
+     RowBox[{"coeff0", "+", 
+      RowBox[{"coeff1", "*", "dt"}]}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Print", "[", 
+     RowBox[{
+     "\"\<Approximated Total Variance = \>\"", ",", "approxTotalVar"}], "]"}],
+     ";"}]}], "\[IndentingNewLine]", "\[IndentingNewLine]", "]"}]}], "Input",
+ CellChangeTimes->{
+  3.90135030087259*^9, {3.9013503326497602`*^9, 3.9013503367416677`*^9}, {
+   3.901350394471382*^9, 3.9013505052421*^9}, {3.9013506045915337`*^9, 
+   3.901350620549467*^9}, {3.901350771633758*^9, 3.901350918998968*^9}, {
+   3.901350976403495*^9, 3.901351273199586*^9}, {3.901351314304082*^9, 
+   3.9013513147015467`*^9}, {3.901351360731865*^9, 3.901351394536416*^9}, {
+   3.901351469652845*^9, 3.9013514768911*^9}},
+ CellLabel->
+  "In[430]:=",ExpressionUUID->"2f30311a-1c61-47a0-9167-2c319496ef6d"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Expected change to n over time dt = \"\>", "\[InvisibleSpace]", 
+   RowBox[{"dt", " ", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"-", "kb"}], " ", "n"}], "+", 
+      RowBox[{"n", " ", 
+       RowBox[{"Max", "[", 
+        RowBox[{"0", ",", 
+         RowBox[{"kb", "+", 
+          RowBox[{"Cb", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}]}], 
+     ")"}]}]}],
+  SequenceForm[
+  "Expected change to n over time dt = ", $CellContext`dt (-$CellContext`kb \
+$CellContext`n + $CellContext`n 
+     Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)])],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901351315235894*^9, 3.901351362598977*^9, 
+  3.901351478183112*^9, 3.901354383127529*^9, 3.901355084473016*^9},
+ CellLabel->
+  "During evaluation of \
+In[430]:=",ExpressionUUID->"3d3089a0-7a14-4f94-8ff1-63c1f5a90984"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Squared expected change to n over time dt = \"\>", 
+   "\[InvisibleSpace]", 
+   RowBox[{
+    RowBox[{
+     SuperscriptBox["dt", "2"], " ", 
+     SuperscriptBox["kb", "2"], " ", 
+     SuperscriptBox["n", "2"]}], "-", 
+    RowBox[{"2", " ", 
+     SuperscriptBox["dt", "2"], " ", "kb", " ", 
+     SuperscriptBox["n", "2"], " ", 
+     RowBox[{"Max", "[", 
+      RowBox[{"0", ",", 
+       RowBox[{"kb", "+", 
+        RowBox[{"Cb", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}], "+", 
+    RowBox[{
+     SuperscriptBox["dt", "2"], " ", 
+     SuperscriptBox["n", "2"], " ", 
+     SuperscriptBox[
+      RowBox[{"Max", "[", 
+       RowBox[{"0", ",", 
+        RowBox[{"kb", "+", 
+         RowBox[{"Cb", " ", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}], "2"]}]}]}],
+  SequenceForm[
+  "Squared expected change to n over time dt = ", $CellContext`dt^2 \
+$CellContext`kb^2 $CellContext`n^2 - 
+   2 $CellContext`dt^2 $CellContext`kb $CellContext`n^2 
+   Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)] + $CellContext`dt^2 $CellContext`n^2 
+    Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)]^2],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901351315235894*^9, 3.901351362598977*^9, 
+  3.901351478183112*^9, 3.901354383127529*^9, 3.901355084474601*^9},
+ CellLabel->
+  "During evaluation of \
+In[430]:=",ExpressionUUID->"5baf8f5a-648f-456b-b3e2-e837421852af"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Expected squared change to n over time dt = \"\>", 
+   "\[InvisibleSpace]", 
+   RowBox[{
+    RowBox[{"dt", " ", "kb", " ", "n"}], "+", 
+    RowBox[{"dt", " ", "n", " ", 
+     RowBox[{"Max", "[", 
+      RowBox[{"0", ",", 
+       RowBox[{"kb", "+", 
+        RowBox[{"Cb", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}]}]}],
+  SequenceForm[
+  "Expected squared change to n over time dt = ", $CellContext`dt \
+$CellContext`kb $CellContext`n + $CellContext`dt $CellContext`n 
+    Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)]],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901351315235894*^9, 3.901351362598977*^9, 
+  3.901351478183112*^9, 3.901354383127529*^9, 3.9013550844765167`*^9},
+ CellLabel->
+  "During evaluation of \
+In[430]:=",ExpressionUUID->"b733af4e-1638-44b6-a232-db8152a9b0fd"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Variance of n = \"\>", "\[InvisibleSpace]", 
+   RowBox[{
+    RowBox[{"dt", " ", "kb", " ", "n"}], "-", 
+    RowBox[{
+     SuperscriptBox["dt", "2"], " ", 
+     SuperscriptBox["kb", "2"], " ", 
+     SuperscriptBox["n", "2"]}], "+", 
+    RowBox[{"dt", " ", "n", " ", 
+     RowBox[{"Max", "[", 
+      RowBox[{"0", ",", 
+       RowBox[{"kb", "+", 
+        RowBox[{"Cb", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}], "+", 
+    RowBox[{"2", " ", 
+     SuperscriptBox["dt", "2"], " ", "kb", " ", 
+     SuperscriptBox["n", "2"], " ", 
+     RowBox[{"Max", "[", 
+      RowBox[{"0", ",", 
+       RowBox[{"kb", "+", 
+        RowBox[{"Cb", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}], "-", 
+    RowBox[{
+     SuperscriptBox["dt", "2"], " ", 
+     SuperscriptBox["n", "2"], " ", 
+     SuperscriptBox[
+      RowBox[{"Max", "[", 
+       RowBox[{"0", ",", 
+        RowBox[{"kb", "+", 
+         RowBox[{"Cb", " ", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}], "2"]}]}]}],
+  SequenceForm[
+  "Variance of n = ", $CellContext`dt $CellContext`kb $CellContext`n - \
+$CellContext`dt^2 $CellContext`kb^2 $CellContext`n^2 + $CellContext`dt \
+$CellContext`n 
+    Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)] + 
+   2 $CellContext`dt^2 $CellContext`kb $CellContext`n^2 
+    Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)] - $CellContext`dt^2 $CellContext`n^2 
+   Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)]^2],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901351315235894*^9, 3.901351362598977*^9, 
+  3.901351478183112*^9, 3.901354383127529*^9, 3.901355084477927*^9},
+ CellLabel->
+  "During evaluation of \
+In[430]:=",ExpressionUUID->"fadcd55f-a080-455c-a8fc-3ba0cef064a0"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Approximated Total Variance = \"\>", "\[InvisibleSpace]", 
+   RowBox[{"dt", " ", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{"kb", " ", "n"}], "+", 
+      RowBox[{"n", " ", 
+       RowBox[{"Max", "[", 
+        RowBox[{"0", ",", 
+         RowBox[{"kb", "+", 
+          RowBox[{"Cb", " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"-", "n"}], "+", "NSS"}], ")"}]}]}]}], "]"}]}]}], 
+     ")"}]}]}],
+  SequenceForm[
+  "Approximated Total Variance = ", $CellContext`dt ($CellContext`kb \
+$CellContext`n + $CellContext`n 
+     Max[0, $CellContext`kb + $CellContext`Cb (-$CellContext`n + \
+$CellContext`NSS)])],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.901351315235894*^9, 3.901351362598977*^9, 
+  3.901351478183112*^9, 3.901354383127529*^9, 3.901355084479472*^9},
+ CellLabel->
+  "During evaluation of \
+In[430]:=",ExpressionUUID->"6946970d-99e7-4d1d-b354-cd83960af1f1"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.901355447955729*^9, 
+  3.9013554574028187`*^9}},ExpressionUUID->"0cf79660-55df-4165-bdd3-\
+388965fd21c1"]
+},
+WindowSize->{606., 665.25},
+WindowMargins->{{Automatic, 323.25}, {18, Automatic}},
+FrontEndVersion->"13.2 for Linux x86 (64-bit) (January 31, 2023)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"25942b1c-9acd-48ef-a616-42e74178103b"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 5507, 135, 877, "Input",ExpressionUUID->"f9809854-cac6-4db2-a791-a173d33500cf"],
+Cell[CellGroupData[{
+Cell[6112, 161, 888, 27, 25, "Print",ExpressionUUID->"e956b7ce-12af-4a32-b7f8-d19ccee1989e"],
+Cell[7003, 190, 1422, 40, 25, "Print",ExpressionUUID->"c1bdd42f-5988-4796-b229-2ea7091cfb65"],
+Cell[8428, 232, 1153, 31, 25, "Print",ExpressionUUID->"9d4c72d2-cf2b-40b6-9785-57676b3954bd"],
+Cell[9584, 265, 2274, 62, 25, "Print",ExpressionUUID->"d252c57f-b1c2-444f-8fb3-940f6039a98d"],
+Cell[11861, 329, 3644, 98, 46, "Print",ExpressionUUID->"d42114b1-a5a6-4d29-b39f-828565bb2b0e"],
+Cell[15508, 429, 905, 26, 25, "Print",ExpressionUUID->"0650f860-7bc6-4255-85fc-f1ee9419d909"],
+Cell[16416, 457, 327, 9, 25, "Print",ExpressionUUID->"67d0ca3d-82e3-4029-82bf-3fa3ff4ebf6e"],
+Cell[16746, 468, 525, 17, 25, "Print",ExpressionUUID->"3c767601-b06e-4964-9ba8-3cf0feafafb6"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[17320, 491, 5003, 130, 821, "Input",ExpressionUUID->"2f30311a-1c61-47a0-9167-2c319496ef6d"],
+Cell[CellGroupData[{
+Cell[22348, 625, 987, 27, 46, "Print",ExpressionUUID->"3d3089a0-7a14-4f94-8ff1-63c1f5a90984"],
+Cell[23338, 654, 1597, 43, 45, "Print",ExpressionUUID->"5baf8f5a-648f-456b-b3e2-e837421852af"],
+Cell[24938, 699, 944, 24, 45, "Print",ExpressionUUID->"b733af4e-1638-44b6-a232-db8152a9b0fd"],
+Cell[25885, 725, 2009, 54, 46, "Print",ExpressionUUID->"fadcd55f-a080-455c-a8fc-3ba0cef064a0"],
+Cell[27897, 781, 951, 26, 25, "Print",ExpressionUUID->"6946970d-99e7-4d1d-b354-cd83960af1f1"]
+}, Open  ]]
+}, Open  ]],
+Cell[28875, 811, 154, 3, 29, "Input",ExpressionUUID->"0cf79660-55df-4165-bdd3-388965fd21c1"]
+}
+]
+*)
+
+(* End of internal cache information *)
+

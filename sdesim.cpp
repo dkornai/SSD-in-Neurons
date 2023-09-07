@@ -22,7 +22,10 @@ using vec_double = std::vector<double>;
 typedef py::array_t<double> np_vec_f64; // 1d np.float64 array
 typedef py::array_t<int> np_vec_i32; // 1d np.int32 array 
 
-typedef Eigen::Ref<Eigen::MatrixXi> np_mat_i32; // 2d np.int32 array 
+typedef Eigen::Ref<Eigen::VectorXi> np_vec_i32_EigR; // view on a 1d np.float64 array, which can be directly written via Eigen syntax
+typedef Eigen::Ref<Eigen::VectorXd> np_vec_f64_EigR; // view on a 1d np.float64 array, which can be directly written via Eigen syntax
+typedef Eigen::Ref<Eigen::MatrixXi> np_mat_i32_EigR; // view on a 2d np.int32 array, which can be directly written via Eigen syntax
+typedef Eigen::Ref<Eigen::MatrixXd> np_mat_f64_EigR; // view on a 2d np.int32 array, which can be directly written via Eigen syntax
 
 typedef Eigen::DiagonalMatrix<int, Eigen::Dynamic> Eigen_diag_mat; // diagonalized matrix
 
@@ -53,7 +56,10 @@ vec_int get_int_vec_from_np(
 }
 
 // Eigen int vector from np.int32 array
-Eigen::VectorXi get_eig_int_vec_from_np(py::array_t<int> input) {
+Eigen::VectorXi get_eig_int_vec_from_np(
+    py::array_t<int> input
+    ) 
+{
     py::buffer_info buf = input.request();
     if (buf.ndim != 1) {
         throw std::runtime_error("Expected a 1D numpy array");
@@ -65,6 +71,24 @@ Eigen::VectorXi get_eig_int_vec_from_np(py::array_t<int> input) {
     return eigenVector;
 }
 
+// generate an array of integers where the n-th value is the index i when t will be closest to time_points[n]
+vec_int closest_time_index(
+    const   vec_double&     time_points, 
+    const   double          dt
+    ) 
+{
+    vec_int sample_i(time_points.size());
+
+    for (size_t n_idx = 0; n_idx < time_points.size(); ++n_idx) {
+        double target_time = time_points[n_idx];
+        int closest_i = std::round(target_time / dt);
+
+        sample_i[n_idx] = closest_i;
+    }
+
+    return sample_i;
+}
+
 
 
 // GILLESPIE FUNCTION //
@@ -72,9 +96,9 @@ void sim_gillespie(
     const   np_vec_f64      in_time_points,             // points in time where system state should be recorded
     
     const   np_vec_i32      in_sys_state,               // starting 'sys_state'
-            np_mat_i32      sys_state_sample,           // array where the 'sys_state' is recorded at each time in 'time_points'
+            np_mat_i32_EigR sys_state_sample,           // array where the 'sys_state' is recorded at each time in 'time_points'
             
-    const   np_mat_i32      reactions,                  // 'sys_state' updates corresponding to each possible reaction
+    const   np_mat_i32_EigR reactions,                  // 'sys_state' updates corresponding to each possible reaction
     const   np_vec_f64      in_percap_r_rates,             // per capita reaction rates
     const   np_vec_i32      in_state_index,             // indeces of system state variables from which propensity is calculated
 
@@ -160,10 +184,10 @@ void sim_tauleaping(
     const   double          timestep,                   // simulation time step
     
     const   np_vec_i32      in_sys_state,               // starting 'sys_state'
-            np_mat_i32      sys_state_sample,           // array where the 'sys_state' is recorded at each time in 'time_points'
+            np_mat_i32_EigR sys_state_sample,           // array where the 'sys_state' is recorded at each time in 'time_points'
             
-    const   np_mat_i32      reactions,                  // 'sys_state' updates corresponding to each possible reaction
-    const   np_vec_f64      in_percap_r_rates,             // per capita reaction rates
+    const   np_mat_i32_EigR reactions,                  // 'sys_state' updates corresponding to each possible reaction
+    const   np_vec_f64      in_percap_r_rates,          // per capita reaction rates
     const   np_vec_i32      in_state_index,             // indeces of system state variables from which propensity is calculated
 
     const   np_vec_f64      in_birthrate_updates_par,   // parameters used to update dynamic birth rates
@@ -241,9 +265,138 @@ void sim_tauleaping(
     }
 }
 
+
+// EULER-MARUYAMA SIMULATOR //
+void sim_langevin_em(
+    const   np_vec_f64      in_time_points,             // points in time where system state should be recorded
+    const   double          dt,                         // simulation time step
+    
+    const   double          start_state,                // starting copy number
+            np_vec_f64_EigR sys_state_sample,           // 1D array where the 'sys_state' is recorded at each time in 'time_points'
+            
+    const   double          birthrate,
+    const   double          deathrate,
+    const   double          NSS,
+    const   double          c_b
+    )
+{   
+    // ### VARIABLE SETUP #### //
+
+    // c++ versions of numpy arrays
+    const   vec_double      time_points     = get_double_vec_from_np(in_time_points);
+            
+    // counts often accessed during loops
+    const   int             n_time_points   = time_points.size();           // number of time steps to be sampled
+    const   int             n_time_steps    = time_points.back()/dt;  // number of total timesteps in the simulation
+
+    // generators for the Weiner process  
+    std::mt19937 gen(std::random_device{}());
+    std::normal_distribution<double> stdnorm(0.0, 1.0);
+    const   double          sqrtdt          = sqrt(dt); // pre computed scaler for the weiner process
+
+    // vector containing loop indeces closest to each time point in 'time_points'
+    const   vec_int         time_indeces    = closest_time_index(time_points, dt);
+
+    // ### SIMULATOR #### //
+
+    double x = 0.0;                   // current value of x
+    double x_p = start_state;   // previous value of x
+
+    int    t_step = 0;
+
+    // loop through the time points to sample
+    for (int i = 0; i <= n_time_steps; ++i) {
+        
+        // write the current state of the system to the output array
+        if (i == time_indeces[t_step]){
+            sys_state_sample(t_step) = x_p;
+            t_step ++;
+        }
+
+        // get next state of system from the previous state
+        x = x_p + x_p*((std::max(0.0, birthrate+(c_b*(NSS-x_p))))-deathrate)*dt + sqrt(x_p*(std::max(0.0, birthrate+(c_b*(NSS-x_p)))+deathrate))*stdnorm(gen)*sqrtdt;
+        x_p = x;
+
+        // check if the system has completely exhausted, and exit if needed (input array is all 0s anyway)
+        if (x_p <= 0) {
+            break;
+        }
+
+    }
+}
+
+// //  //
+// void sim_brown_gill(
+//     const   np_vec_f64      in_time_points,             // points in time where system state should be recorded
+    
+//     const   int             start_state,                // starting copy number
+//             np_vec_i32_EigR sys_state_sample,           // 1D array where the 'sys_state' is recorded at each time in 'time_points'
+            
+//     const   double          birthrate,
+//     const   double          deathrate
+//     )
+// {
+//     // ### VARIABLE SETUP #### //
+
+//     // c++ versions of numpy arrays
+//     const   vec_double      time_points     = get_double_vec_from_np(in_time_points);
+    
+//     // counts often accessed during loops
+//     const   int             n_time_points   = time_points.size();
+    
+//     // variables used for calculating event rates
+//             double          propensity_sum;                     // sum of global reaction rates
+//             double          birth_prop;
+//             double          death_prop;
+
+//     // init a random generator
+//     std::mt19937 gen(std::random_device{}());
+
+//     // set up a distribution for drawing birth or death events
+//     std::discrete_distribution<> birth_death_dist({birthrate, deathrate});
+
+//     double x = start_state; // current value of x
+
+//     int reactions[2] = {1, -1};
+
+//     double t = time_points[0];
+//     // loop through the time points to sample
+//     for (int i = 0; i < n_time_points; ++i) {
+        
+//         while (t < time_points[i]) {
+            
+//             // calculate global reaction propensity by multiplyin per capita rates with the number of reactants, while keeping track of their cumsum
+//             birth_prop = x*birthrate;
+//             death_prop = x*deathrate;
+//             propensity_sum = birth_prop + death_prop;
+
+//             // if the system as died out, break the loop
+//             if (propensity_sum == 0.0) {
+//                 t = time_points[i];
+//                 break;
+//             }
+
+//             // get the reaction and apply the reaction to the state of the system
+//             x += reactions[birth_death_dist(gen)];
+            
+//             // // increment time forward
+//             std::exponential_distribution<> expdist(propensity_sum);
+//             t += expdist(gen);
+
+//         }
+        
+//         // write the current state of the system to the output array
+//         sys_state_sample[i] = x;
+        
+//     }
+// }
+
+
 // PYBIND // 
 PYBIND11_MODULE(libsdesim, m)
 {
-    m.def("sim_gillespie", &sim_gillespie, "simulate using gillespie");
-    m.def("sim_tauleaping", &sim_tauleaping, "simulate using tau leaping");
+    m.def("sim_gillespie", &sim_gillespie, "simulate CME using gillespie");
+    m.def("sim_tauleaping", &sim_tauleaping, "simulate CME using tau leaping");
+    m.def("sim_langevin_em", &sim_langevin_em, "simulate Ornstein-Uhlenbeck via Euler-Maruyama");
+    //m.def("sim_brown_gill", &sim_brown_gill, "simulate brownian gillespie");
 }

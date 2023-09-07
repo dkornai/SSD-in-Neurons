@@ -179,3 +179,77 @@ def simulate_tauleaping(
 
 
     return replicate_results
+
+
+
+# wrapper for the c++ ornstein-uhlenbeck simulator module
+def langevin_em_wrapper(
+        vartup:         tuple[np.ndarray, float, float, float, float, float, float, float, float]
+        ) ->            np.ndarray:
+
+    # unpack tuple of variables
+    time_points, dt, start_state, birthrate, deathrate, NSS, c_b = vartup
+    
+
+    # create arrays which will be modified in place
+    sys_state_sample    = np.zeros(time_points.size, dtype = np.float64)
+
+    # run c++ module, which modifies 'sys_state_sample' in place
+    libsdesim.sim_langevin_em(
+        time_points,
+        dt, 
+        start_state, 
+        sys_state_sample, 
+        birthrate,
+        deathrate,
+        NSS,
+        c_b,
+        )
+
+    # return array 
+    return sys_state_sample
+
+# wrapper to simulate using tau leaping
+def simulate_langevin_em(
+        ou_param:       dict,
+        time_points:    np.ndarray,
+        start_state:    float,
+        replicates:     int = 100,
+        timestep:       float = 0.01,
+        n_cpu:          int = 0,
+        ) ->            np.ndarray:
+
+    # create array for output
+    replicate_results   = np.zeros((replicates, time_points.size), dtype = np.float64)
+
+    # create arrays holding simulation parameters
+    time_points         = np.array(time_points, dtype = np.float64)
+    dt                  = float(timestep)
+    start_state         = float(start_state)
+    birthrate           = float(ou_param['birthrate'])
+    deathrate           = float(ou_param['deathrate'])
+    NSS                 = float(ou_param['NSS'])
+    c_b                 = float(ou_param['c_b'])
+
+    print('simulating Langevin using Euler-Maruyama...')
+    pbar = tqdm(total=replicates)
+
+    if n_cpu == 0:
+        n_cpu = cpu_count()
+    with Pool(n_cpu) as pool:
+        # prepare arguments as list of tuples
+        param = [(time_points, dt, start_state, birthrate, deathrate, NSS, c_b) for _ in range(replicates)]
+        
+        # make list that unordered results will be deposited to
+        pool_results = []
+
+        # execute tasks
+        for result in pool.imap_unordered(langevin_em_wrapper, param):
+            pool_results.append(result)
+            pbar.update(1)
+
+        # write to output array
+        for i in range(replicates): replicate_results[i,:] = pool_results[i]
+
+
+    return replicate_results

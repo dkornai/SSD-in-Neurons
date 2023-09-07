@@ -246,3 +246,68 @@ def two_component_statistics(
     print()
 
     return time_df, stat_res
+
+def one_component_statistics(
+        replicate_results,  # variable values over time (number of wildtype and mutant in each compartment)
+        time_points,        # time points where the measurements were taken
+        delta,              # mutant deficiency, used in calculating effective population sizes
+        ):
+    
+    n_samp = replicate_results.shape[0]
+    
+    # wt in soma
+    wt = replicate_results[:,0,:]
+    wt_mean = np.nanmean(wt, axis=0)
+    wt_sem = np.nanstd(wt, axis=0)/np.sqrt(n_samp)
+
+    # mt in soma
+    mt = replicate_results[:,1,:]
+    mt_mean = np.nanmean(mt, axis=0)
+    mt_sem = np.nanstd(mt, axis=0)/np.sqrt(n_samp)
+
+
+    # get total effective population size
+    eps = wt + (mt*delta)
+    eps_mean = np.nanmean(eps, axis = 0)
+    eps_sem = np.nanstd(eps,axis=0)/np.sqrt(n_samp)
+
+
+    # get total population size
+    ps = wt + mt
+    ps_mean = np.nanmean(ps, axis=0)
+    ps_sem = np.nanstd(ps,axis=0)/np.sqrt(n_samp)
+    
+
+    # proportion of exhausted cells
+    prop_exhaust = np.mean(ps == 0, axis=0)
+
+    # get total heteroplasmy
+    het = mt/(mt+wt)
+    het_mean = np.nanmean(het, axis=0)
+        # heteroplasmy is not defined for exhausted cells, so sample size must be adjusted down accordingly
+    het_sem = np.nanstd(het, axis=0)/np.sqrt((1-prop_exhaust)*n_samp) 
+
+    # proportion of 0 or 1 heteroplasmy
+    prop_het1 = np.mean(het == 1, axis=0)
+    prop_het0 = np.mean(het == 0, axis=0)
+
+    res = {
+        't':            np.round(time_points, 1),
+        'ps_mean':      np.round(ps_mean,2),
+        'ps_sem':       np.round(ps_sem,2),
+        'eps_mean':     np.round(eps_mean,2),
+        'eps_sem':      np.round(eps_sem,2),
+        'het_mean':     np.round(het_mean,4),
+        'het_sem':      np.round(het_sem,4),
+        'p_het_1':      np.round(prop_het1,4),
+        'p_het_0':      np.round(prop_het0,4),
+        'p_pop0':       np.round(prop_exhaust,4),
+        'wt_mean':      np.round(wt_mean,2),
+        'wt_sem':       np.round(wt_sem,2),
+        'mt_mean':      np.round(mt_mean,2),
+        'mt_sem':       np.round(mt_sem,2),
+        }
+    
+    time_df = pd.DataFrame.from_dict(res)
+
+    return time_df

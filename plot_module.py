@@ -213,7 +213,7 @@ def plot_twocomponent_results(stats_df):
         mean = stats_df[mean_key].to_numpy()
         sem = stats_df[sem_key].to_numpy()
         axs[0, 0].plot(t, mean, label = line_label)
-        axs[0, 0].fill_between(t, mean - (2*sem), mean + (2*sem), alpha=0.1)
+        axs[0, 0].fill_between(t, mean - (2*sem), mean + (2*sem), alpha=0.2)
 
     axs[0, 0].legend()
     axs[0, 0].set_title('SDE: mean wt and mt counts in soma and axon')
@@ -224,6 +224,7 @@ def plot_twocomponent_results(stats_df):
     eps_sem = stats_df['eps_sem'].to_numpy()
     axs[1, 0].plot(t, eps_mean, label = f'mean eff. pop. size') 
     axs[1, 0].fill_between(t, eps_mean-(2*eps_sem), eps_mean+(2*eps_sem), color='blue', alpha=0.2)
+    
     axs[1, 0].legend()
     axs[1, 0].set_title('SDE: eff. pop. size over time')
 
@@ -231,9 +232,16 @@ def plot_twocomponent_results(stats_df):
     ## plot heteroplasmy levels over time
     het_mean = stats_df['het_mean'].to_numpy()
     het_sem = stats_df['het_sem'].to_numpy()
-    axs[0, 1].plot(t, het_mean, label = f'mean heteroplasmy') 
+    axs[0, 1].plot(t, het_mean, label = f'mean heteroplasmy')
     axs[0, 1].fill_between(t, het_mean-(2*het_sem), het_mean+(2*het_sem), color='blue', alpha=0.2)
     axs[0, 1].axhline(y = het_mean[0], alpha=0.2)
+    
+    p_het_0 = stats_df['p_het_0'].to_numpy()
+    p_het_1 = stats_df['p_het_1'].to_numpy()
+    axs[0, 1].plot(t, p_het_0, label = f'proportion of mt extinctions')
+    axs[0, 1].plot(t, p_het_1, label = f'proportion of mt takeover')
+
+
     axs[0, 1].set_ylim([0, 1])
     axs[0, 1].legend()
     axs[0, 1].set_title('SDE: mean heteroplasmy over time')
@@ -244,9 +252,69 @@ def plot_twocomponent_results(stats_df):
     pop_sem = stats_df['ps_sem'].to_numpy()
     axs[1, 1].plot(t, pop_mean, label = f'mean total pop. size') 
     axs[1, 1].fill_between(t, pop_mean-(2*pop_sem), pop_mean+(2*pop_sem), color='blue', alpha=0.2)
+    
     axs[1, 1].legend()
     axs[1, 1].set_title('SDE: total population over time')
 
+
+    plt.show()
+
+
+def plot_onecomponent_results(stats_df):
+    t = stats_df['t'].to_numpy()
+    fig, axs = plt.subplots(2, 2, figsize=(15, 8))
+    
+    ## plot absolute population sizes
+    for mean_key, sem_key, line_label in zip(
+            ['wt_mean', 'mt_mean'],
+            ['wt_sem', 'mt_sem'],
+            ['wt mean', 'mt mean']
+        ):
+
+        mean = stats_df[mean_key].to_numpy()
+        sem = stats_df[sem_key].to_numpy()
+        axs[0, 0].plot(t, mean, label = line_label)
+        axs[0, 0].fill_between(t, mean - (2*sem), mean + (2*sem), alpha=0.2)
+
+    axs[0, 0].legend()
+    axs[0, 0].set_title('SDE: mean wt and mt counts in soma and axon')
+
+
+    ## plot effective population sizes over time
+    eps_mean = stats_df['eps_mean'].to_numpy()
+    eps_sem = stats_df['eps_sem'].to_numpy()
+    axs[1, 0].plot(t, eps_mean, label = f'mean eff. pop. size') 
+    axs[1, 0].fill_between(t, eps_mean-(2*eps_sem), eps_mean+(2*eps_sem), color='blue', alpha=0.2)
+    
+    axs[1, 0].legend()
+    axs[1, 0].set_title('SDE: eff. pop. size over time')
+
+    ## plot heteroplasmy levels over time
+    het_mean = stats_df['het_mean'].to_numpy()
+    het_sem = stats_df['het_sem'].to_numpy()
+    axs[0, 1].plot(t, het_mean, label = f'mean heteroplasmy') 
+    axs[0, 1].fill_between(t, het_mean-(2*het_sem), het_mean+(2*het_sem), color='blue', alpha=0.2)
+    axs[0, 1].axhline(y = het_mean[0], alpha=0.2)
+    
+    p_het_0 = stats_df['p_het_0'].to_numpy()
+    p_het_1 = stats_df['p_het_1'].to_numpy()
+    p_pop0 = stats_df['p_pop0'].to_numpy()
+    axs[0, 1].plot(t, p_het_0, alpha=0.7, label = f'proportion of wt takeovers')
+    axs[0, 1].plot(t, p_het_1, alpha=0.7, label = f'proportion of mt takeovers')
+    axs[0, 1].plot(t, p_pop0, alpha=0.7, label = f'proportion extinctions')
+
+    axs[0, 1].set_ylim([0, 1])
+    axs[0, 1].legend()
+    axs[0, 1].set_title('SDE: mean heteroplasmy over time')
+
+    ## plot total population size
+    pop_mean = stats_df['ps_mean'].to_numpy()
+    pop_sem = stats_df['ps_sem'].to_numpy()
+    axs[1, 1].plot(t, pop_mean, label = f'mean total pop. size') 
+    axs[1, 1].fill_between(t, pop_mean-(2*pop_sem), pop_mean+(2*pop_sem), color='blue', alpha=0.2)
+    
+    axs[1, 1].legend()
+    axs[1, 1].set_title('SDE: total population over time')
 
     plt.show()
 

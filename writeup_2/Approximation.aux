@@ -1,12 +1,40 @@
 \relax 
-\@writefile{toc}{\contentsline {section}{\numberline {1}Ornstein-Uhlenbeck approximation}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Introduction}{1}{}\protected@file@percent }
-\newlabel{eq:o_u}{{1}{1}}
-\newlabel{eq:gradient}{{2}{1}}
-\newlabel{eq:o_u_full}{{3}{1}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Parameter estimation}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {1.2.1}Estimating D}{1}{}\protected@file@percent }
-\newlabel{eq:D}{{4}{1}}
-\newlabel{eq:D_fit}{{5}{1}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {1.2.2}Estimating $\alpha $}{1}{}\protected@file@percent }
-\gdef \@abspage@last{1}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Description of the Birth-Death chemical master equation}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Gillespie Algorithm}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Deriving the Langevin approximation to the CME}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}The drift term}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.1}Deriving $f(n)$}{1}{}\protected@file@percent }
+\newlabel{eq:term_drift}{{2}{1}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.2}Exploring $f(n)$}{2}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces  Dependence of drift term $f(n)$ on the control strength $C$ and turnover $k$. \textbf  {a)} $f(n)$ across various values of $C_b$ when $k = 0.4$ \textbf  {b)} $f(n)$ across various values of $k$ when $C_b = 0.01$ \relax }}{2}{}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:drift_depend}{{1}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}The noise term $g(n)$}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.1}deriving $g(n)$}{2}{}\protected@file@percent }
+\newlabel{eq:delta_n_variance}{{8}{3}}
+\newlabel{eq:g_n_squared}{{12}{3}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.2}Exploring $g(n)$}{3}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces  Dependence of the noise term $g(n)$ on the control strength $C$ and turnover $k$. \textbf  {a)} $g(n)$ across various values of $C_b$ when $k = 0.4$ \textbf  {b)} $g(n)$ across various values of $k$ when $C_b = 0.01$ \relax }}{3}{}\protected@file@percent }
+\newlabel{fig:noise_depend}{{2}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Complete equation}{4}{}\protected@file@percent }
+\newlabel{eq:langevin_full}{{13}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Simulation using the Euler-Maruyama method}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.4.1}Update equation}{4}{}\protected@file@percent }
+\newlabel{eq:term_drift}{{15}{4}}
+\newlabel{eq:magnitude_noise}{{16}{4}}
+\newlabel{eq:term_noise}{{17}{4}}
+\newlabel{eq:EM_update}{{18}{4}}
+\@writefile{toc}{\contentsline {section}{\numberline {3} Continuous-Time Markov Chain representation of the CME}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Defining the state space $S$}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Defining the transition rate matrix $Q$}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Defining the transition probability matrix over time $P(t)$}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Calculating the distribution of states over time $\pi (t)$}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Results}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Interpretation}{5}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Comparison of copy numbers over time at a high $C$ value. (10000 replicates, $k = 0.4$)\relax }}{6}{}\protected@file@percent }
+\newlabel{fig:match_1}{{3}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Copy numbers decrease over time at lower $C$ values (10000 replicates, $k = 0.4$)\relax }}{6}{}\protected@file@percent }
+\newlabel{fig:match_2}{{4}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Copy numbers are stagnant over time when $C \approxeq 0$ (10000 replicates, $k = 0.4$)\relax }}{6}{}\protected@file@percent }
+\newlabel{fig:match_3}{{5}{6}}
+\gdef \@abspage@last{6}
